@@ -24,6 +24,7 @@ import {
 import { Processing, Factory, FactorySupply } from "@/lib/types";
 import { getFactory } from "@/app/actions/factoryActions";
 import { getFactoryGrades } from "@/app/actions/productActions";
+import { useUser } from "@clerk/nextjs";
 
 export default function CropProcessing() {
   const [showForm, setShowForm] = useState(false);
@@ -35,10 +36,12 @@ export default function CropProcessing() {
   const itemsPerPage = 10;
 
   const queryClient = useQueryClient();
+  const { user } = useUser();
+  const factoryId = user?.publicMetadata.role as number;
 
   const { data: processing = [], isLoading } = useQuery<Processing[]>({
-    queryKey: ["cropProcessing"],
-    queryFn: () => getCropProcessing(),
+    queryKey: ["cropProcessing", factoryId],
+    queryFn: () => getCropProcessing(factoryId),
   });
 
   const { data: factories = [] } = useQuery<Factory[]>({
