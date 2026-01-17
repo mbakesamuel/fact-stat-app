@@ -36,12 +36,10 @@ export default function CropProcessing() {
   const itemsPerPage = 10;
 
   const queryClient = useQueryClient();
-  const { user } = useUser();
-  const factoryId = user?.publicMetadata.role as number;
-
+  
   const { data: processing = [], isLoading } = useQuery<Processing[]>({
-    queryKey: ["cropProcessing", factoryId],
-    queryFn: () => getCropProcessing(factoryId),
+    queryKey: ["cropProcessing"],
+    queryFn: () => getCropProcessing(),
   });
 
   const { data: factories = [] } = useQuery<Factory[]>({

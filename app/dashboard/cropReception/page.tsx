@@ -42,8 +42,8 @@ export default function CropReception() {
   const queryClient = useQueryClient();
 
   const { data: receptions = [], isLoading } = useQuery<Reception[]>({
-    queryKey: ["cropReceptions"],
-    queryFn: () => getCropReception(),
+    queryKey: ["cropReceptions", factoryId],
+    queryFn: () => getCropReception(factoryId),
   });
 
   const { data: factories = [] } = useQuery<Factory[]>({
@@ -149,12 +149,17 @@ export default function CropReception() {
               }}
               className="px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
-              <option value="all">All Factories</option>
-              {factories.map((factory) => (
-                <option key={factory.id} value={factory.id}>
-                  {factory.factory_name}
-                </option>
-              ))}
+              {factoryId ? (
+                factories
+                  .filter((f) => String(f.id) === String(factoryId))
+                  .map((factory) => (
+                    <option key={factory.id} value={factory.id}>
+                      {factory.factory_name}
+                    </option>
+                  ))
+              ) : (
+                <option value="all">All Factories</option>
+              )}
             </select>
           </div>
         </CardContent>
@@ -263,13 +268,13 @@ export default function CropReception() {
               </TableBody>
             </Table>
           </div>
-           {totalPages > 1 && (
+          {totalPages > 1 && (
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
               onPageChange={setCurrentPage}
             />
-           )}
+          )}
         </CardContent>
       </Card>
     </div>
