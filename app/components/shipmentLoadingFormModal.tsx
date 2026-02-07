@@ -12,12 +12,14 @@ export default function ShipmentLoadingFormModal({
   initialData,
   factoryId,
   contract_no,
+  status,
 }: {
   onClose: () => void;
   onSave: (data: Omit<ShipmentLoadingDetails, "id">) => void;
   initialData: Omit<ShipmentLoadingDetails, "id"> | null;
   factoryId: number;
   contract_no?: string;
+  status: { orderQty: number; loadedQty: number; balance: number } | null;
 }) {
   //const [balance, setBalance] = useState<number | null>(null);
   const [formData, setFormData] = useState<Omit<ShipmentLoadingDetails, "id">>({
@@ -116,13 +118,23 @@ export default function ShipmentLoadingFormModal({
             value={formData.qty}
             onChange={(e) => handleChange("qty", parseInt(e.target.value, 10))}
           />
+          {status && (
+            <p className="text-sm text-gray-500">
+              Remaining balance: {status.balance}{" "}
+            </p>
+          )}
         </div>
       </div>
       <div className="space-y-2 flex flex-row justify-end gap-2">
         <Button variant="outline" onClick={onClose}>
           Cancel
         </Button>
-        <Button onClick={() => onSave(formData)}>Save</Button>
+        <Button
+          disabled={!!status && formData.qty > status.balance}
+          onClick={() => onSave(formData)}
+        >
+          Save
+        </Button>
       </div>
     </form>
   );

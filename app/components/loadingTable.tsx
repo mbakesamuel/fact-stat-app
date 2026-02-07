@@ -61,13 +61,6 @@ export default function LoadingTable({
   type SaveInput = Omit<ShipmentLoadingDetails, "id"> & { id?: number };
 
   const handleSave = async (formData: SaveInput) => {
-    if (status && status?.balance !== null && formData.qty > status?.balance) {
-      setErrorMessage(
-        `Cannot save. Quantity exceeds contract balance of ${status?.balance}.`,
-      );
-      setIsErrorDialogOpen(true);
-      return;
-    }
     if (formData.id) {
       // Update existing record
       const updated = await updateLoading(formData.id, formData);
@@ -239,6 +232,7 @@ export default function LoadingTable({
             initialData={editingItem}
             factoryId={factoryId}
             contract_no={contract_no}
+            status={status}
           />
         </DialogContent>
       </Dialog>
