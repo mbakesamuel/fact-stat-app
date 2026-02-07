@@ -1,7 +1,7 @@
 import { Reception } from "@/lib/types";
 
 //get crop Receptions
-export async function getCropReception(factoryId?: number) {
+export async function getCropReception(factoryId?: string) {
   try {
     const url = factoryId
       ? `https://fact-data.onrender.com/api/crop-receptions?factoryId=${factoryId}`

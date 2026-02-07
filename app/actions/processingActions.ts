@@ -1,69 +1,97 @@
-export async function getCropProcessing(factoryId?: number) {
-  //if factoryId is provided, use it to filter otherwise return all processings
+"use server";
+
+import { sql } from "@/lib/db";
+import { Processing } from "@/lib/types";
+
+// Get all processing
+export async function getAllProcessing(
+  factoryId?: string,
+): Promise<Processing[]> {
   try {
-    const url = factoryId
-      ? `https://fact-data.onrender.com/api/crop-processings?factoryId=${factoryId}`
-      : `https://fact-data.onrender.com/api/crop-processings`;
-    const res = await fetch(url);
-    if (res.ok) return res.json();
-  } catch (error) {
-    console.error("failed fetch data", error);
+    let rows;
+    if (factoryId) {
+      rows = await sql`
+        SELECT 
+          cp.*,
+          f.id   AS factory_id,
+          f.factory_name AS factory_name,
+          fs.id  AS process_grade_id,
+          fs.crop AS process_grade_name
+        FROM "CropProcessing" cp
+        JOIN "Factory" f ON cp.factory_id = f.id
+        JOIN "FieldSupply" fs ON cp.process_grade_id = fs.id
+        WHERE cp.factory_id = ${factoryId};
+      `;
+    } else {
+      rows = await sql`
+        SELECT 
+          cp.*,
+          f.id   AS factory_id,
+          f.factory_name AS factory_name,
+          fs.id  AS process_grade_id,
+          fs.crop AS process_grade_name
+        FROM "CropProcessing" cp
+        JOIN "Factory" f ON cp.factory_id = f.id
+        JOIN "FieldSupply" fs ON cp.process_grade_id = fs.id;
+      `;
+    }
+    return rows as Processing[];
+  } catch (error: any) {
+    throw new Error(error.message);
   }
 }
 
-//create new processing
-export async function createCropProcessing(data: any) {
+//create Processing
+export async function createProcessing(
+  data: Processing,
+  userId: string,
+  factoryId: string,
+): Promise<Processing | undefined> {
   try {
-    const res = await fetch(
-      `https://fact-data.onrender.com/api/crop-processings`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      }
-    );
-
-    if (res.ok) return res.json();
-    throw new Error("Failed to create crop processing");
-  } catch (error) {
-    console.error("Error creating crop processing:", error);
+    const [row] = await sql`
+      INSERT INTO "CropProcessing" (operation_date, factory_id, process_grade_id, qty_proc, user_id)
+      VALUES (${data.operation_date}, ${factoryId}, ${data.process_grade_id}, ${data.qty_proc}, ${userId})
+      RETURNING *
+    `;
+    return row as Processing;
+  } catch (error: any) {
+    throw new Error(error.message);
   }
 }
-//update existing processing
-export async function updateCropProcessing(id: string, data: any) {
-  try {
-    const res = await fetch(
-      `https://fact-data.onrender.com/api/crop-processings/${id}`,
-      {
-        method: "PUT", // or PATCH depending on your API
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      }
-    );
 
-    if (res.ok) return res.json();
-    throw new Error("Failed to update crop processing");
-  } catch (error) {
-    console.error("Error updating crop processing:", error);
+// Update a crop processing
+export async function updateProcessing(
+  id: string,
+  data: Processing,
+): Promise<Processing> {
+  try {
+    const [row] = await sql`
+      UPDATE "CropProcessing"
+      SET operation_date = ${data.operation_date},
+          factory_id = ${data.factory_id},
+          process_grade_id = ${data.process_grade_id},
+          qty_proc = ${data.qty_proc},
+          user_id = ${data.user_id}
+      WHERE id = ${id}
+      RETURNING *
+    `;
+    if (!row) throw new Error("Not found");
+    return row as Processing;
+  } catch (error: any) {
+    throw new Error(error.message);
   }
 }
-//delete processing
-export async function deleteCropProcessing(id: string) {
-  try {
-    const res = await fetch(
-      `https://fact-data.onrender.com/api/crop-processings/${id}`,
-      {
-        method: "DELETE",
-      }
-    );
 
-    if (res.ok) return res.json();
-    throw new Error("Failed to delete crop processing");
-  } catch (error) {
-    console.error("Error deleting crop processing:", error);
+// Delete a crop processing
+export async function deleteProcessing(
+  id: string,
+): Promise<{ success: boolean; deleted?: Processing }> {
+  try {
+    const [row] =
+      await sql`DELETE FROM "CropProcessing" WHERE id = ${id} RETURNING *`;
+    if (!row) throw new Error("Not found");
+    return { success: true, deleted: row as Processing };
+  } catch (error: any) {
+    throw new Error(error.message);
   }
 }
