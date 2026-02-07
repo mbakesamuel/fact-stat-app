@@ -12,12 +12,14 @@ export default function ShipmentLoadingFormModal({
   initialData,
   factoryId,
   contract_no,
+  status,
 }: {
   onClose: () => void;
   onSave: (data: Omit<ShipmentLoadingDetails, "id">) => void;
   initialData: Omit<ShipmentLoadingDetails, "id"> | null;
   factoryId: number;
   contract_no?: string;
+  status: { orderQty: number; loadedQty: number; balance: number } | null;
 }) {
   //const [balance, setBalance] = useState<number | null>(null);
   const [formData, setFormData] = useState<Omit<ShipmentLoadingDetails, "id">>({

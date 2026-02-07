@@ -239,6 +239,7 @@ export default function LoadingTable({
             initialData={editingItem}
             factoryId={factoryId}
             contract_no={contract_no}
+            status={status}
           />
         </DialogContent>
       </Dialog>
@@ -274,8 +275,6 @@ export default function LoadingTable({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Error dialog box */}
 
       {/* Error Dialog */}
       <Dialog open={isErrorDialogOpen} onOpenChange={setIsErrorDialogOpen}>
