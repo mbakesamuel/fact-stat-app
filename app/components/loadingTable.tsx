@@ -239,7 +239,6 @@ export default function LoadingTable({
             initialData={editingItem}
             factoryId={factoryId}
             contract_no={contract_no}
-            status={status}
           />
         </DialogContent>
       </Dialog>
