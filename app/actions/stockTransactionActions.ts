@@ -53,29 +53,29 @@ export async function getTransactions(
     ? await sql`
         SELECT 
           id,
-          "stockType" AS stock_type,
-          "transDate" AS trans_date,
-          "tbl_FactoryId" AS factory_id,
-          "tbl_FieldSupplyId" AS product_id,
-          "transDescription" AS transaction_desc,
-          "transMode" AS trans_mode,
+          "stock_type" AS stock_type,
+          "trans_date" AS trans_date,
+          "factory_id" AS factory_id,
+          "field_supply_id" AS product_id,
+          "trans_description" AS transaction_desc,
+          "trans_mode" AS trans_mode,
           qty
         FROM "StockTransaction"
-        WHERE "tbl_FactoryId" = ${factoryId}
-        ORDER BY "transDate" DESC;
+        WHERE "factory_id" = ${factoryId}
+        ORDER BY "trans_date" DESC;
       `
     : await sql`
         SELECT 
           id,
-          "stockType" AS stock_type,
-          "transDate" AS trans_date,
-          "tbl_FactoryId" AS factory_id,
-          "tbl_FieldSupplyId" AS product_id,
-          "transDescription" AS transaction_desc,
-          "transMode" AS trans_mode,
+          "stock_type" AS stock_type,
+          "trans_date" AS trans_date,
+          "factory_id" AS factory_id,
+          "field_supply_id" AS product_id,
+          "trans_description" AS transaction_desc,
+          "trans_mode" AS trans_mode,
           qty
         FROM "StockTransaction"
-        ORDER BY "transDate" DESC;
+        ORDER BY "trans_date" DESC;
       `;
 
   return rows as Transaction[];
@@ -113,14 +113,14 @@ export async function updateTransaction(
     const [row] = await sql`
       UPDATE "StockTransaction"
       SET 
-        "stockType" = ${payload.stock_type},
-        "transDate" = ${payload.trans_date},
-        "tbl_FactoryId" = ${payload.factory_id},
-        "tbl_FieldSupplyId" = ${payload.product_id},
-        "transDescription" = ${payload.transaction_desc},
-        "transMode" = ${payload.trans_mode},
+        "stock_type" = ${payload.stock_type},
+        "trans_date" = ${payload.trans_date},
+        "factory_id" = ${payload.factory_id},
+        "field_supply_id" = ${payload.product_id},
+        "trans_description" = ${payload.transaction_desc},
+        "trans_mode" = ${payload.trans_mode},
         "qty" = ${payload.qty},
-        "updatedAt" = NOW(),      
+        "updated_at" = NOW(),      
       WHERE "id" = ${id}
       RETURNING *;
     `;
@@ -152,16 +152,16 @@ export async function getLastTransactionDate(
   try {
     const [row] = factoryId
       ? await sql`
-          SELECT "transDate"
+          SELECT "trans_date"
           FROM "StockTransaction"
-          WHERE "tbl_FactoryId" = ${factoryId}
-          ORDER BY "transDate" DESC
+          WHERE "factory_id" = ${factoryId}
+          ORDER BY "trans_date" DESC
           LIMIT 1;
         `
       : await sql`
-          SELECT "transDate"
+          SELECT "trans_date"
           FROM "StockTransaction"
-          ORDER BY "transDate" DESC
+          ORDER BY "trans_date" DESC
           LIMIT 1;
         `;
 
