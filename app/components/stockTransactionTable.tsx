@@ -659,7 +659,7 @@ export default function StockTransactionTable({
                           : "-"}
                       </TableCell>
                       <TableCell>
-                        {getFactoryName(String(trans.factory_id), factories)}
+                        {getFactoryName(Number(trans.factory_id), factories)}
                       </TableCell>
                       <TableCell>
                         <span
