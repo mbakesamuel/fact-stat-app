@@ -58,7 +58,7 @@ export default function DashboardFilters({
             variant="outline"
             className={cn(
               "w-[200px] justify-start text-left font-normal bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all",
-              !date && "text-slate-500"
+              !date && "text-slate-500",
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4 text-slate-400" />
@@ -103,7 +103,7 @@ export default function DashboardFilters({
           {factories.map((factory) => (
             <SelectItem
               key={factory.id}
-              value={factory.id}
+              value={Number(factory.id).toString()}
               className="hover:bg-slate-50"
             >
               {factory.factory_name}
