@@ -83,7 +83,7 @@ export default function ShippingOrderModal({
   const addOrderItem = () => {
     setOrderItems([
       ...orderItems,
-      { class_id: "", grade_id: "", packing: "", qty: 0 },
+      { id: 0, class_id: "", grade_id: "", packing: "", qty: 0 },
     ]);
   };
 
@@ -244,7 +244,7 @@ export default function ShippingOrderModal({
         </div>
       </div>
 
-      {/* shipment Order items */}
+      {/**************** shipment Order items **********************/}
       <div className="border-t pt-4 mt-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold">Shipment Order Items</h3>
@@ -261,11 +261,11 @@ export default function ShippingOrderModal({
 
         <div className="space-y-3">
           {orderItems.map((item, index) => (
-            <div className="flex flex-row gap-2 mb-4 items-center">
-              <div
-                key={item.id ?? index}
-                className="grid grid-cols-1 md:grid-cols-5 gap-3 p-3 border rounded-lg bg-slate-50"
-              >
+            <div
+              key={item.id}
+              className="flex flex-row gap-2 mb-4 items-center"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-3 p-3 border rounded-lg bg-slate-50">
                 <Select
                   value={item.class_id}
                   onValueChange={(value) =>

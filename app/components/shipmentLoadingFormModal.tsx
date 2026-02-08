@@ -115,12 +115,16 @@ export default function ShipmentLoadingFormModal({
           <Input
             id="qty"
             type="number"
-            value={formData.qty}
-            onChange={(e) => handleChange("qty", parseInt(e.target.value, 10))}
+            value={isNaN(formData.qty) ? "" : formData.qty}
+            onChange={(e) => {
+              const val = parseInt(e.target.value, 10);
+              handleChange("qty", isNaN(val) ? 0 : val);
+            }}
           />
+
           {status && (
             <p className="text-sm text-gray-500">
-              Remaining balance: {status.balance}{" "}
+              Remaining balance: {status.balance.toLocaleString()} Kgs
             </p>
           )}
         </div>

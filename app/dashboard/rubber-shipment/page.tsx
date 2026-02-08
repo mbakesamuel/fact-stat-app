@@ -6,7 +6,7 @@ import RubberShipment from "@/app/components/rubberShipment";
 import { getAllShippingOrders } from "@/app/actions/ordersActions";
 import { getAllFieldSupply } from "@/app/actions/productActions";
 import { getLoadingSummaryByContract } from "@/app/actions/loadingActions";
-import { AwardIcon } from "lucide-react";
+
 
 export default async function Shipment() {
   const agents = await getAllAgents();

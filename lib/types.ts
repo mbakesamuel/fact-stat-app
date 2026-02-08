@@ -183,7 +183,7 @@ export type Agents = {
 };
 
 export type OrderDetails = {
-  id?: number;
+  id: number;
   contract_no?: string;
   class_id:string;
   grade_id: string;

@@ -121,8 +121,14 @@ export async function deleteLoading(
 }
 
 // 5. get loading summary by contract
-export async function getLoadingSummaryByContract(): Promise<any[]> {
-  const rows = await sql`
+export async function getLoadingSummaryByContract(): Promise<
+  {
+    contract_no: string;
+    total_loadings: number;
+    loaded_qty: number;
+  }[]
+> {
+  const result = await sql`
     SELECT 
       contract_no,
       COUNT(*) AS total_loadings,
@@ -130,13 +136,16 @@ export async function getLoadingSummaryByContract(): Promise<any[]> {
     FROM "ShipmentLoadingDetails" 
     GROUP BY contract_no;
   `;
-  return rows;
+
+  return result.map((row) => ({
+    contract_no: row.contract_no,
+    total_loadings: Number(row.total_loadings),
+    loaded_qty: Number(row.loaded_qty),
+  }));
 }
 
 6; //get loading balance for a contract
-export async function getLoadingBalanceByContract(
-  contractNo: string,
-): Promise<{
+export async function getLoadingBalanceByContract(contractNo: string): Promise<{
   contractNo: string;
   orderQty: number;
   loadedQty: number;

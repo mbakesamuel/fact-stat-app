@@ -64,12 +64,7 @@ export default function RubberShipment({
   };
 
   const getLoadingDetails = (contract_no: string) => {
-    const lDetails = loadDetails.filter((d) => d.contract_no === contract_no);
-    const totalLoaded = lDetails.reduce(
-      (sum, d) => sum + (d.loaded_qty || 0),
-      0,
-    );
-    return totalLoaded;
+    return loadDetails.filter((d) => d.contract_no === contract_no);
   };
 
   const getRubberClassName = (classId: number) => {
@@ -119,7 +114,6 @@ export default function RubberShipment({
         </div>
         <Button
           onClick={() => setShowFormModal(true)}
-          /*  className="bg-linear-to-r from-amber-500 to amber-600 hover:from-amber-600 hover:tto-amber-700 shadow-lg shadow-amber-500/30" */
           className="bg-linear-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/30"
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -247,33 +241,28 @@ export default function RubberShipment({
         <>
           <div className="grid grid-cols-1 gap-4">
             {paginatedOrders.map((order) => {
-              /* details */
+              /* Order details */
               const details = getOrderDetails(order.contract_no);
-
-              /* loaded */
-              const loaded_qty = getLoadingDetails(order.contract_no);
-              const loadedDetails = loadDetails.filter(
-                (d) => d.contract_no === order.contract_no,
-              );
               const totalQty = details.reduce(
                 (sum, d) => sum + (d.qty || 0),
                 0,
               );
 
-              const totalLoadedQty = loadedDetails.reduce(
+              /* Loading Details */
+              const loadDetails = getLoadingDetails(order.contract_no);
+              const totalLoadedQty = loadDetails.reduce(
                 (sum, d) => sum + (d.loaded_qty || 0),
                 0,
               );
 
               const balance = totalQty - totalLoadedQty;
-
               return (
                 <Card
                   key={order.contract_no}
                   className="glass-effect border-none shadow-lg hover:shadow-xl transition-shadow"
                 >
                   <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
+                    <div className="flex flex-col gap-2 md:flex-row items-start justify-between">
                       <div className="flex-1">
                         <CardTitle className="text-lg flex items-center gap-2">
                           <Package className="w-5 h-5 text-emerald-600" />
@@ -341,15 +330,15 @@ export default function RubberShipment({
                       </div>
                       <div>
                         <span className="text-slate-600">Total Quantity:</span>
-                        <p className="font-semibold">{totalQty} Kgs</p>
+                        <p className="font-semibold">{totalQty.toLocaleString()} Kgs</p>
                       </div>
                       <div>
                         <span className="text-slate-600">Total Loaded:</span>
-                        <p className="font-semibold">{totalLoadedQty} Kgs</p>
+                        <p className="font-semibold">{totalLoadedQty.toLocaleString()} Kgs</p>
                       </div>
                       <div>
                         <span className="text-slate-600">Balance:</span>
-                        <p className="font-semibold">{balance} Kgs</p>
+                        <p className="font-semibold">{balance.toLocaleString()} Kgs</p>
                       </div>
                     </div>
                   </CardContent>
