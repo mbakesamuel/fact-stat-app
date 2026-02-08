@@ -103,7 +103,7 @@ export default function DashboardFilters({
           {factories.map((factory) => (
             <SelectItem
               key={factory.id}
-              value={Number(factory.id).toString()}
+              value={String(factory.id)}
               className="hover:bg-slate-50"
             >
               {factory.factory_name}
