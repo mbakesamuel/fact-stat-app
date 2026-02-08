@@ -23,7 +23,7 @@ export const formatDate = (date: Date): string => {
   return `${day}/${month}/${year}`;
 };
 
-export const getFactoryName = (id: string, factories: Factory[]) =>
+export const getFactoryName = (id: number, factories: Factory[]) =>
   factories.find((f) => f.id === id)?.factory_name || "Unknown";
 
 /* export const getGradeName = (id: string, fieldSupplies: FieldSupply[]) => */

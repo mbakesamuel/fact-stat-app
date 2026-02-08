@@ -12,7 +12,7 @@ export interface Reception {
 }
 
 export interface Factory {
-  id: string;
+  id: number;
   factory_name: string;
 }
 

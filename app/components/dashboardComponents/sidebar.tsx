@@ -16,6 +16,7 @@ import {
   Sticker,
   Ship,
   LoaderPinwheel,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -73,6 +74,7 @@ export default function SidebarClient() {
         { name: "Factories", page: "Factories", icon: FactoryIcon },
         { name: "Estates", page: "Estates", icon: Building2 },
         { name: "Supply Units", page: "SupplyUnits", icon: TrendingUp },
+        { name: "Users", page: "Users", icon: Users },
       ],
     },
     {

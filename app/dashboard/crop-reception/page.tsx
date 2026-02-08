@@ -28,7 +28,6 @@ export default async function Reception() {
   const factories = await getFactory();
   const receptions = await getAllReceptions();
 
-
   return (
     <ReceptionTable
       role={role}

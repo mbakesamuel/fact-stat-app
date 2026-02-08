@@ -18,7 +18,7 @@ export async function getFactory(id?: string): Promise<Factory[]> {
       `;
       // Normalize to your interface
       return rows.map((r) => ({
-        id: String(r.id),
+        id: Number(r.id),
         factory_name: String(r.factory_name),
       }));
     }
@@ -28,7 +28,7 @@ export async function getFactory(id?: string): Promise<Factory[]> {
       FROM "Factory"
     `;
     return rows.map((r) => ({
-      id: String(r.id),
+      id: Number(r.id),
       factory_name: String(r.factory_name),
     }));
   } catch (error) {

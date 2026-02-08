@@ -27,6 +27,7 @@ import createLoading, {
 import { Pencil, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import LoadingCard from "./loadingCard";
 
 export default function LoadingTable({
   loadings,
@@ -83,26 +84,22 @@ export default function LoadingTable({
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <h2>Shipment Loading Details</h2>
-      </div>
-
       <Card className="glass-effect border-none shadow-lg overflow-hidden pl-4">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">
-            Loading Records
+            Loading Details
           </CardTitle>
-          <div className=" flex justify-end">
+          <div className="flex justify-center md:justify-end">
             <Button
-              className="bg-linear-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/30"
+              className="w-full md:w-auto bg-linear-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/30"
               onClick={() => setIsDialogOpen(true)}
             >
-              Add Loading
+              Add Loading Record
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
+          {/* <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Contract No</TableHead>
@@ -206,7 +203,130 @@ export default function LoadingTable({
                 <TableCell />
               </TableRow>
             </TableFooter>
-          </Table>
+          </Table> */}
+          <div className="space-y-4 md:hidden">
+            {data.map((load) => (
+              <LoadingCard
+                key={load.id}
+                load={load}
+                onEdit={() => {
+                  setEditingItem(load);
+                  setIsDialogOpen(true);
+                }}
+                onDelete={() => {
+                  setDeleteId(load.id);
+                  setConfirmOpen(true);
+                }}
+              />
+            ))}
+          </div>
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Contract No</TableHead>
+                  <TableHead>Loading Date</TableHead>
+                  <TableHead>Departure Date</TableHead>
+                  <TableHead>Vessel</TableHead>
+                  <TableHead>Container No</TableHead>
+                  <TableHead>Seal No</TableHead>
+                  <TableHead>Tally No</TableHead>
+                  <TableHead>Quantity</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+
+              <TableBody>
+                {!data ? (
+                  [...Array(5)].map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell>
+                        <Skeleton className="h-4 w-24" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-32" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-24" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-28" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-16" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-8 w-20" />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : data.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      className="text-center py-8 text-slate-500"
+                      colSpan={9}
+                    >
+                      No Loading Details yet
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  data.map((load) => (
+                    <TableRow key={load.id}>
+                      <TableCell>{load.contractNo}</TableCell>
+                      <TableCell>
+                        {new Date(load.loadingDate).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(load.departDate).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>{load.vessel}</TableCell>
+                      <TableCell>{load.containerNo}</TableCell>
+                      <TableCell>{load.sealNo}</TableCell>
+                      <TableCell>{load.tallyNo}</TableCell>
+                      <TableCell>{load.qty.toLocaleString()}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => {
+                              setEditingItem(load);
+                              setIsDialogOpen(true);
+                            }}
+                            size="sm"
+                            variant="ghost"
+                            className="hover:bg-blue-50 hover:text-blue-600"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              setDeleteId(load.id);
+                              setConfirmOpen(true);
+                            }}
+                            size="sm"
+                            variant="ghost"
+                            className="hover:bg-red-50 hover:text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center font-bold">
+                    Total
+                  </TableCell>
+                  <TableCell className="text-left font-bold">
+                    {totalQty.toLocaleString()}
+                  </TableCell>
+                  <TableCell />
+                </TableRow>
+              </TableFooter>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 

@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Filter, Pencil, Plus, Trash2 } from "lucide-react";
+import { ClipboardList, Filter, Pencil, Plus, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 
 import {
@@ -44,6 +44,7 @@ import {
   getGradeName,
   getSupplyUnitName,
 } from "@/lib/HelperFunctions";
+import ReceptionCard from "./receptionCard";
 
 export default function ReceptionTable({
   role,
@@ -153,46 +154,14 @@ export default function ReceptionTable({
     currentPage * itemsPerPage,
   );
 
+  //helper function to fetch the factory name from the factory id
+  const getFactoryNameById = (id: number) => {
+    const factory = factories.find((f) => f.id === id);
+    return factory ? factory.factory_name : "Unknown Factory";
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">
-            Rubber Reception
-          </h1>
-          <p className="text-slate-600 mt-1">
-            Track all incoming Crop deliveries into the Factory - Estates,
-            Contract Rubber Tapping and Small Holders C.
-          </p>
-        </div>
-      </div>
-
-      {/* Reception Modal Form */}
-      <Dialog open={showModalForm} onOpenChange={setShowModalForm}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingReception ? "Edit Reception" : "New Reception"}
-            </DialogTitle>
-          </DialogHeader>
-          <ReceptionFormModal
-            reception={editingReception}
-            onClose={handleCloseForm}
-            onSubmit={async (formData) => {
-              if (editingReception) {
-                await handleReception("update", formData, editingReception.id);
-              } else {
-                await handleReception("create", formData);
-              }
-              setShowModalForm(false);
-              setEditingReception(null);
-            }}
-            fieldSupplies={products}
-            supplyUnits={supplyUnits}
-          />
-        </DialogContent>
-      </Dialog>
-
       {/* Filter */}
       {role !== "clerk" && role !== "ium" && (
         <Card className="glass-effect border-none shadow-lg">
@@ -223,26 +192,53 @@ export default function ReceptionTable({
       )}
 
       {/* table */}
-      <Card className="glass-effect border-none shadow-lg overflow-hidden pl-4">
+      <Card className="glass-effect border-none shadow-lg overflow-hidden p-2">
         <CardHeader className="border-b border-slate-100">
-          <CardTitle className="text-2xl font-bold">
-            Reception Records
+          <CardTitle className=" flex-col items-center gap-2">
+            <div className="flex flex-col gap-4">
+              <h1>
+                <span className="font-bold text-emerald-600 text-2xl uppercase">{`${getFactoryNameById(Number(factoryId))}`}</span>
+              </h1>
+              <div className="flex">
+                <ClipboardList className="w-5 h-5 text-emerald-600" />
+                <span className="text-slate-800">
+                  Managing Crop Deliveries into Factory
+                </span>
+              </div>
+            </div>
           </CardTitle>
-          <div className="flex justify-end">
-            {!isSummary && (
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="flex md:justify-end mb-4">
+            {(role === "clerk" || role === "ium") && (
               <Button
                 onClick={() => setShowModalForm(true)}
-                className="bg-linear-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/30"
+                className="w-full md:w-auto bg-linear-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-emerald-500/30"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 New Reception
               </Button>
             )}
           </div>
-        </CardHeader>
-        <CardContent className="p-0">
+
           <div className="overflow-x-auto">
-            <Table>
+            <div className="space-y-4 md:hidden">
+              {paginatedReceptions.map((reception) => (
+                <ReceptionCard
+                  key={reception.id}
+                  reception={reception}
+                  onEdit={() => {
+                    setEditingReception(reception);
+                    setShowModalForm(true);
+                  } }
+                  onDelete={() => {
+                    setDeleteId(reception.id);
+                    setConfirmOpen(true);
+                  } } factories={factories} products={products} supplyUnits={supplyUnits}                />
+              ))}
+            </div>
+            <div className="hidden md:block overflow-x-auto">
+               <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50">
                   {isSummary
@@ -334,7 +330,7 @@ export default function ReceptionTable({
                       </TableCell>
                       <TableCell>
                         {getFactoryName(
-                          String(reception.factory_id),
+                          Number(reception.factory_id),
                           factories,
                         )}
                       </TableCell>
@@ -418,6 +414,8 @@ export default function ReceptionTable({
                 </TableRow>
               </tfoot>
             </Table>
+            </div>
+           
           </div>
           {/* pagination component */}
           <div>
@@ -457,6 +455,32 @@ export default function ReceptionTable({
               Delete
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reception Modal Form */}
+      <Dialog open={showModalForm} onOpenChange={setShowModalForm}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingReception ? "Edit Reception" : "New Reception"}
+            </DialogTitle>
+          </DialogHeader>
+          <ReceptionFormModal
+            reception={editingReception}
+            onClose={handleCloseForm}
+            onSubmit={async (formData) => {
+              if (editingReception) {
+                await handleReception("update", formData, editingReception.id);
+              } else {
+                await handleReception("create", formData);
+              }
+              setShowModalForm(false);
+              setEditingReception(null);
+            }}
+            fieldSupplies={products}
+            supplyUnits={supplyUnits}
+          />
         </DialogContent>
       </Dialog>
     </div>

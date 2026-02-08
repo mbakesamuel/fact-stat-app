@@ -11,6 +11,7 @@ export function createPageUrl(page: string): string {
     estates: "/estates",
     supplyunits: "/supplyUnits",
     settings: "/settings",
+    users: "/dashboard/create-account",
     // add more mappings as needed
   };
 
