@@ -331,11 +331,14 @@ export default function ProcessingTable({
                       )}
                     </TableCell>
                     <TableCell>
-                      {getFactoryName(String(processing.factory_id), factories)}
+                      {getFactoryName(Number(processing.factory_id), factories)}
                     </TableCell>
                     <TableCell>
                       <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">
-                        {getGradeName(Number(processing.process_grade_id), products)}
+                        {getGradeName(
+                          Number(processing.process_grade_id),
+                          products,
+                        )}
                       </span>
                     </TableCell>
 
