@@ -15,7 +15,7 @@ import {
   Factory,
   FactoryStock,
   StockLevel,
-  StockProductType,
+  ProductType,
   Transaction,
 } from "@/lib/types";
 import {
@@ -48,7 +48,7 @@ export default function StockTransactionTable({
   latestTransDate,
 }: {
   factories: Factory[];
-  products: StockProductType[];
+  products: ProductType[];
   intitialData: Transaction[];
   factoryId: string;
   userId: string;

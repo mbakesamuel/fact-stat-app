@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatDateForInput } from "@/lib/HelperFunctions";
-import { StockProductType, Transaction } from "@/lib/types";
+import { ProductType, Transaction } from "@/lib/types";
 import {
   Select,
   SelectTrigger,
@@ -21,7 +21,7 @@ export default function StockFormModal({
   onSubmit,
 }: {
   transaction: Transaction | null;
-  products: StockProductType[];
+  products: ProductType[];
   onClose: () => void;
   onSubmit: (formData: any) => void;
 }) {
