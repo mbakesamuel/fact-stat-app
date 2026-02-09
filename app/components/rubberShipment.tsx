@@ -18,7 +18,7 @@ import {
   OrderDetails,
   PackingMethod,
   RubberClass,
-  StockProductType,
+  ProductType,
 } from "@/lib/types";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,7 +41,7 @@ export default function RubberShipment({
   loadDetails: any[];
   agents: Agents[];
   rubberClasses: RubberClass[];
-  products: StockProductType[];
+  products: ProductType[];
   packingMethods: PackingMethod[];
 }) {
   const [showFormModal, setShowFormModal] = useState(false);
@@ -330,15 +330,21 @@ export default function RubberShipment({
                       </div>
                       <div>
                         <span className="text-slate-600">Total Quantity:</span>
-                        <p className="font-semibold">{totalQty.toLocaleString()} Kgs</p>
+                        <p className="font-semibold">
+                          {totalQty.toLocaleString()} Kgs
+                        </p>
                       </div>
                       <div>
                         <span className="text-slate-600">Total Loaded:</span>
-                        <p className="font-semibold">{totalLoadedQty.toLocaleString()} Kgs</p>
+                        <p className="font-semibold">
+                          {totalLoadedQty.toLocaleString()} Kgs
+                        </p>
                       </div>
                       <div>
                         <span className="text-slate-600">Balance:</span>
-                        <p className="font-semibold">{balance.toLocaleString()} Kgs</p>
+                        <p className="font-semibold">
+                          {balance.toLocaleString()} Kgs
+                        </p>
                       </div>
                     </div>
                   </CardContent>
