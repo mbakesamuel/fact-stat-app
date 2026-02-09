@@ -1,5 +1,5 @@
 import { getFactory } from "@/app/actions/factoryActions";
-import { getAllFieldSupply } from "@/app/actions/productActions";
+import { getProduct } from "@/app/actions/productActions";
 import {
   getTransactions,
   getLastTransactionDate,
@@ -22,7 +22,7 @@ export default async function Stock() {
     data = await getTransactions(factoryId);
   }
 
-  const products = await getAllFieldSupply();
+  const products = await getProduct();
   const factories = await getFactory();
   const latestTransDate = await getLastTransactionDate(factoryId);
 
