@@ -1,3 +1,5 @@
+export const revalidate = 0;
+
 // app/reception/page.tsx
 import { getReceptionSummary, getAllReceptions } from "@/app/actions/reception";
 import { getCropSupplyUnitName } from "@/app/actions/cropSupplyUnitActions";

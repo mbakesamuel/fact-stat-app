@@ -1,3 +1,5 @@
+export const revalidate = 0;
+
 import { getAllAgents } from "@/app/actions/agentActions";
 import { getAllPackingMethods } from "@/app/actions/packingMethodActions";
 import { getAllRubberClasses } from "@/app/actions/rubberClassActions";

@@ -1,3 +1,5 @@
+export const revalidate = 0;
+
 import { getFactory } from "@/app/actions/factoryActions";
 import { getAllProcessing } from "@/app/actions/processingActions";
 import { getAllFieldSupply } from "@/app/actions/productActions";

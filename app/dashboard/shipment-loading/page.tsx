@@ -1,4 +1,9 @@
-import { getAllLoading, getLoadingBalanceByContract, getLoadingSummaryByContract } from "@/app/actions/loadingActions";
+export const revalidate = 0;
+
+import {
+  getAllLoading,
+  getLoadingBalanceByContract,
+} from "@/app/actions/loadingActions";
 import LoadingTable from "@/app/components/loadingTable";
 
 export default async function LoadingPage({
@@ -11,8 +16,13 @@ export default async function LoadingPage({
 
   const loadings = await getAllLoading(contract_no);
   const status = await getLoadingBalanceByContract(contract_no);
- 
 
-
-  return <LoadingTable loadings={loadings} factoryId={factoryId} contract_no={contract_no} status={status} />;
+  return (
+    <LoadingTable
+      loadings={loadings}
+      factoryId={factoryId}
+      contract_no={contract_no}
+      status={status}
+    />
+  );
 }
