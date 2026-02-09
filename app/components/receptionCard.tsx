@@ -7,9 +7,8 @@ import {
 } from "@/lib/HelperFunctions";
 import {
   Factory,
-  FieldSupply,
   Reception,
-  StockProductType,
+  ProductType,
   SupplyUnit,
 } from "@/lib/types";
 import { format } from "date-fns";
@@ -25,7 +24,7 @@ export default function ReceptionCard({
 }: {
   reception: Reception;
   factories: Factory[];
-  products: StockProductType[];
+  products: ProductType[];
   supplyUnits: SupplyUnit[];
   onEdit: () => void;
   onDelete: () => void;
