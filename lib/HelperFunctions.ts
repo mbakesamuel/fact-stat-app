@@ -1,6 +1,5 @@
 import { format } from "date-fns";
-import { Factory, StockProductType, SupplyUnit } from "./types";
-import { Value } from "@radix-ui/react-select";
+import { Factory, ProductType, SupplyUnit } from "./types";
 
 export const formatDateForInput = (dateString: string) => {
   if (!dateString) return "";
@@ -8,12 +7,11 @@ export const formatDateForInput = (dateString: string) => {
   return d.toISOString().split("T")[0]; // "YYYY-MM-DD"
 };
 
-
 export const fDate = (value: Date | string | null): string | null => {
   if (!value) return null;
   const d = typeof value === "string" ? new Date(value) : value;
   return d.toISOString().split("T")[0]; // "YYYY-MM-DD"
-}
+};
 
 // Utility to format date as dd/mm/yyyy
 export const formatDate = (date: Date): string => {
@@ -27,11 +25,11 @@ export const getFactoryName = (id: number, factories: Factory[]) =>
   factories.find((f) => f.id === id)?.factory_name || "Unknown";
 
 /* export const getGradeName = (id: string, fieldSupplies: FieldSupply[]) => */
-export const getGradeName = (id: number, products: StockProductType[]) =>
+export const getGradeName = (id: number, products: ProductType[]) =>
   products.find((f) => Number(f.id) === id)?.crop || "Unknown";
 
 export const getSupplyUnitName = (
-  id: string,
+  id: number,
   supplyUnits: SupplyUnit[],
 ): string => {
   const unit = supplyUnits.find((u) => u.id === id);

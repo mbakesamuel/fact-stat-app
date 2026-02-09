@@ -5,12 +5,7 @@ import {
   getGradeName,
   getSupplyUnitName,
 } from "@/lib/HelperFunctions";
-import {
-  Factory,
-  Reception,
-  ProductType,
-  SupplyUnit,
-} from "@/lib/types";
+import { Factory, Reception, ProductType, SupplyUnit } from "@/lib/types";
 import { format } from "date-fns";
 import { Pencil, Trash2 } from "lucide-react";
 
@@ -66,7 +61,7 @@ export default function ReceptionCard({
         </p>
         <p>
           <span className="font-medium">Supply Unit:</span>{" "}
-          {getSupplyUnitName(reception.supply_unit_id, supplyUnits)}
+          {getSupplyUnitName(Number(reception.supply_unit_id), supplyUnits)}
         </p>
         <p className="font-semibold text-emerald-700">
           Quantity: {reception.qty_crop?.toFixed(2)} tons

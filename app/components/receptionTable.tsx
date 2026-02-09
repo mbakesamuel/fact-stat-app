@@ -20,12 +20,7 @@ import { Button } from "@/components/ui/button";
 import { ClipboardList, Filter, Pencil, Plus, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 
-import {
-  Factory,
-  Reception,
-  ProductType,
-  SupplyUnit,
-} from "@/lib/types";
+import { Factory, Reception, ProductType, SupplyUnit } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import Pagination from "./pagination";
 import {
@@ -351,7 +346,7 @@ export default function ReceptionTable({
                         </TableCell>
                         <TableCell>
                           {getSupplyUnitName(
-                            reception.supply_unit_id,
+                            Number(reception.supply_unit_id),
                             supplyUnits,
                           )}
                         </TableCell>
