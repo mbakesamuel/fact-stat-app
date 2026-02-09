@@ -2,7 +2,7 @@ export const revalidate = 0;
 
 import { getFactory } from "@/app/actions/factoryActions";
 import { getAllProcessing } from "@/app/actions/processingActions";
-import { getAllFieldSupply } from "@/app/actions/productActions";
+import { getProduct } from "@/app/actions/productActions";
 import { getReceptionSummary } from "@/app/actions/reception";
 import ProcessingTable from "@/app/components/processingTable";
 
@@ -22,7 +22,7 @@ export default async function ProcessingPage() {
   }
 
   const factories = await getFactory();
-  const products = await getAllFieldSupply();
+  const products = await getProduct();
   const processing = await getAllProcessing();
 
   return (
