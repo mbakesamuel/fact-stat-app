@@ -8,7 +8,7 @@ import {
   OrderDetails,
   PackingMethod,
   RubberClass,
-  StockProductType,
+  ProductType,
 } from "@/lib/types";
 import {
   Select,
@@ -49,7 +49,7 @@ export default function ShippingOrderModal({
   order: Order | null;
   agents: Agents[];
   rubberClasses: RubberClass[];
-  products: StockProductType[];
+  products: ProductType[];
   packingMethods: PackingMethod[];
   onClose: () => void;
   orderDetails: OrderDetails[];
