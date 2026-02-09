@@ -16,7 +16,7 @@ export interface Factory {
   factory_name: string;
 }
 
-export interface FieldSupply {
+/* export interface FieldSupply {
   id: string;
   crop: string;
 }
@@ -24,16 +24,17 @@ export interface FieldSupply {
 export interface FactorySupply {
   id: string;
   crop: string;
-}
+} */
 
-export interface StockProductType {
-  id: string;
+export interface ProductType {
+  id: number;
   crop: string;
   productnature_id: number;
 }
 
 export interface SupplyUnit {
-  id: string;
+  id: number;
+  sub_unit_id: number;
   SupplyUnit: string;
 }
 
@@ -185,7 +186,7 @@ export type Agents = {
 export type OrderDetails = {
   id: number;
   contract_no?: string;
-  class_id:string;
+  class_id: string;
   grade_id: string;
   packing: string;
   qty: number;

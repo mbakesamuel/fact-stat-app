@@ -22,9 +22,8 @@ import { format } from "date-fns";
 
 import {
   Factory,
-  FieldSupply,
   Reception,
-  StockProductType,
+  ProductType,
   SupplyUnit,
 } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -45,6 +44,7 @@ import {
   getSupplyUnitName,
 } from "@/lib/HelperFunctions";
 import ReceptionCard from "./receptionCard";
+import { ProductFilter } from "./productFilter";
 
 export default function ReceptionTable({
   role,
@@ -66,7 +66,7 @@ export default function ReceptionTable({
   initialPeriod: "day" | "week" | "month" | "year";
   receptions: Reception[];
   factories: Factory[];
-  products: StockProductType[];
+  products: ProductType[];
   supplyUnits: SupplyUnit[];
 }) {
   const [data, setData] = useState(initialData);
@@ -82,6 +82,9 @@ export default function ReceptionTable({
   const [filterFactory, setFilterFactory] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  //manage filtering state by grade
+  const [filterProduct, setFilterProduct] = useState("All");
 
   const totalQuantity = isSummary
     ? data.reduce((sum, row: any) => sum + Number(row.total_quantity || 0), 0)
@@ -163,7 +166,7 @@ export default function ReceptionTable({
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Filter */}
-      {role !== "clerk" && role !== "ium" && (
+      {role !== "clerk" && role !== "ium" ? (
         <Card className="glass-effect border-none shadow-lg">
           <CardContent className="p-4">
             <div className="flex flex-col md:flex-row justify-between">
@@ -172,20 +175,18 @@ export default function ReceptionTable({
                 value={filterFactory}
                 onChange={setFilterFactory}
               />
-              <div>
-                {isSummary && (
-                  <select
-                    value={period}
-                    onChange={handlePeriodChange}
-                    className="border rounded px-2 py-1 text-sm"
-                  >
-                    <option value="day">Day</option>
-                    <option value="week">Week</option>
-                    <option value="month">Month</option>
-                    <option value="year">Year</option>
-                  </select>
-                )}
-              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="glass-effect border-none shadow-lg">
+          <CardContent className="p-4">
+            <div className="flex flex-col md:flex-row justify-between">
+              <ProductFilter
+                products={products}
+                value={filterProduct}
+                onChange={setFilterProduct}
+              />
             </div>
           </CardContent>
         </Card>
@@ -230,192 +231,197 @@ export default function ReceptionTable({
                   onEdit={() => {
                     setEditingReception(reception);
                     setShowModalForm(true);
-                  } }
+                  }}
                   onDelete={() => {
                     setDeleteId(reception.id);
                     setConfirmOpen(true);
-                  } } factories={factories} products={products} supplyUnits={supplyUnits}                />
+                  }}
+                  factories={factories}
+                  products={products}
+                  supplyUnits={supplyUnits}
+                />
               ))}
             </div>
             <div className="hidden md:block overflow-x-auto">
-               <Table>
-              <TableHeader>
-                <TableRow className="bg-slate-50">
-                  {isSummary
-                    ? [
-                        <TableHead key="period">Period</TableHead>,
-                        <TableHead key="factory">Factory</TableHead>,
-                        <TableHead key="grade">Grade</TableHead>,
-                        <TableHead key="qty" className="text-right">
-                          Total Quantity (tons)
-                        </TableHead>,
-                      ]
-                    : [
-                        <TableHead key="date">Date</TableHead>,
-                        <TableHead key="factory">Factory</TableHead>,
-                        <TableHead key="grade">Grade</TableHead>,
-                        <TableHead key="supply">Supply Unit</TableHead>,
-                        <TableHead key="qty" className="text-right">
-                          Quantity (tons)
-                        </TableHead>,
-                        <TableHead key="actions">Actions</TableHead>,
-                      ]}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {/* here were displaying a loading state to keep ui busy */}
-                {!receptions ? (
-                  [...Array(5)].map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell>
-                        <Skeleton className="h-4 w-24" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-32" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-24" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-28" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-16" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-8 w-20" />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : paginatedReceptions.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={isSummary ? 4 : 6}
-                      className="text-center py-8 text-slate-500"
-                    >
-                      No records found
-                    </TableCell>
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-50">
+                    {isSummary
+                      ? [
+                          <TableHead key="period">Period</TableHead>,
+                          <TableHead key="factory">Factory</TableHead>,
+                          <TableHead key="grade">Grade</TableHead>,
+                          <TableHead key="qty" className="text-right">
+                            Total Quantity (tons)
+                          </TableHead>,
+                        ]
+                      : [
+                          <TableHead key="date">Date</TableHead>,
+                          <TableHead key="factory">Factory</TableHead>,
+                          <TableHead key="grade">Grade</TableHead>,
+                          <TableHead key="supply">Supply Unit</TableHead>,
+                          <TableHead key="qty" className="text-right">
+                            Quantity (tons)
+                          </TableHead>,
+                          <TableHead key="actions">Actions</TableHead>,
+                        ]}
                   </TableRow>
-                ) : isSummary ? (
-                  paginatedReceptions.map((row: any) => (
-                    <TableRow
-                      key={`${row.factory_id}-${row.field_grade_id}-${row.period}`}
-                      className="hover:bg-slate-50/50 transition-colors"
-                    >
-                      <TableCell>{formatPeriod(row.period, period)}</TableCell>
-                      <TableCell className="font-medium">
-                        {row.factory_name}
-                      </TableCell>
-                      <TableCell>
-                        <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">
-                          {row.field_grade_name}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right font-semibold">
-                        {Number(row.total_quantity).toFixed(2)}
+                </TableHeader>
+                <TableBody>
+                  {/* here were displaying a loading state to keep ui busy */}
+                  {!receptions ? (
+                    [...Array(5)].map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell>
+                          <Skeleton className="h-4 w-24" />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton className="h-4 w-32" />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton className="h-4 w-24" />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton className="h-4 w-28" />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton className="h-4 w-16" />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton className="h-8 w-20" />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : paginatedReceptions.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={isSummary ? 4 : 6}
+                        className="text-center py-8 text-slate-500"
+                      >
+                        No records found
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  paginatedReceptions.map((reception: Reception) => (
-                    <TableRow
-                      key={reception.id}
-                      className="hover:bg-slate-50/50 transition-colors"
-                    >
-                      <TableCell className="font-medium">
-                        {format(
-                          new Date(reception.operation_date),
-                          "MMM dd, yyyy",
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {getFactoryName(
-                          Number(reception.factory_id),
-                          factories,
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">
-                          {getGradeName(
-                            Number(reception.field_grade_id),
-                            products,
+                  ) : isSummary ? (
+                    paginatedReceptions.map((row: any) => (
+                      <TableRow
+                        key={`${row.factory_id}-${row.field_grade_id}-${row.period}`}
+                        className="hover:bg-slate-50/50 transition-colors"
+                      >
+                        <TableCell>
+                          {formatPeriod(row.period, period)}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {row.factory_name}
+                        </TableCell>
+                        <TableCell>
+                          <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">
+                            {row.field_grade_name}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right font-semibold">
+                          {Number(row.total_quantity).toFixed(2)}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    paginatedReceptions.map((reception: Reception) => (
+                      <TableRow
+                        key={reception.id}
+                        className="hover:bg-slate-50/50 transition-colors"
+                      >
+                        <TableCell className="font-medium">
+                          {format(
+                            new Date(reception.operation_date),
+                            "MMM dd, yyyy",
                           )}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        {getSupplyUnitName(
-                          reception.supply_unit_id,
-                          supplyUnits,
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold">
-                        {reception.qty_crop?.toFixed(2)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={() => {
-                              setEditingReception(reception);
-                              setShowModalForm(true);
-                            }}
-                            size="sm"
-                            variant="ghost"
-                            className="hover:bg-blue-50 hover:text-blue-600"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            onClick={() => {
-                              setDeleteId(reception.id);
-                              setConfirmOpen(true);
-                            }}
-                            size="sm"
-                            variant="ghost"
-                            className="hover:bg-red-50 hover:text-red-600"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
+                        </TableCell>
+                        <TableCell>
+                          {getFactoryName(
+                            Number(reception.factory_id),
+                            factories,
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">
+                            {getGradeName(
+                              Number(reception.field_grade_id),
+                              products,
+                            )}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          {getSupplyUnitName(
+                            reception.supply_unit_id,
+                            supplyUnits,
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold">
+                          {reception.qty_crop?.toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={() => {
+                                setEditingReception(reception);
+                                setShowModalForm(true);
+                              }}
+                              size="sm"
+                              variant="ghost"
+                              className="hover:bg-blue-50 hover:text-blue-600"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                setDeleteId(reception.id);
+                                setConfirmOpen(true);
+                              }}
+                              size="sm"
+                              variant="ghost"
+                              className="hover:bg-red-50 hover:text-red-600"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
 
-              {/* table footer */}
-              <tfoot>
-                <TableRow className="bg-slate-100 font-semibold">
-                  {isSummary
-                    ? [
-                        <TableCell
-                          key="label"
-                          colSpan={3}
-                          className="text-right font-bold text-lg"
-                        >
-                          Total
-                        </TableCell>,
-                        <TableCell key="value" className="text-right">
-                          {totalQuantity.toFixed(2)}
-                        </TableCell>,
-                      ]
-                    : [
-                        <TableCell
-                          key="label"
-                          colSpan={4}
-                          className="text-right font-bold text-lg"
-                        >
-                          Total
-                        </TableCell>,
-                        <TableCell key="value" className="text-right text-lg">
-                          {totalQuantity.toFixed(2)}
-                        </TableCell>,
-                        <TableCell key="spacer" />,
-                      ]}
-                </TableRow>
-              </tfoot>
-            </Table>
+                {/* table footer */}
+                <tfoot>
+                  <TableRow className="bg-slate-100 font-semibold">
+                    {isSummary
+                      ? [
+                          <TableCell
+                            key="label"
+                            colSpan={3}
+                            className="text-right font-bold text-lg"
+                          >
+                            Total
+                          </TableCell>,
+                          <TableCell key="value" className="text-right">
+                            {totalQuantity.toFixed(2)}
+                          </TableCell>,
+                        ]
+                      : [
+                          <TableCell
+                            key="label"
+                            colSpan={4}
+                            className="text-right font-bold text-lg"
+                          >
+                            Total
+                          </TableCell>,
+                          <TableCell key="value" className="text-right text-lg">
+                            {totalQuantity.toFixed(2)}
+                          </TableCell>,
+                          <TableCell key="spacer" />,
+                        ]}
+                  </TableRow>
+                </tfoot>
+              </Table>
             </div>
-           
           </div>
           {/* pagination component */}
           <div>
@@ -460,7 +466,7 @@ export default function ReceptionTable({
 
       {/* Reception Modal Form */}
       <Dialog open={showModalForm} onOpenChange={setShowModalForm}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingReception ? "Edit Reception" : "New Reception"}

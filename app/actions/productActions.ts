@@ -1,9 +1,9 @@
 "use server";
 
 import { sql } from "@/lib/db";
-import { FactorySupply, FieldSupply, StockProductType } from "@/lib/types";
+import { ProductType } from "@/lib/types";
 
-export async function getAllFieldSupply(): Promise<StockProductType[]> {
+/* export async function getAllFieldSupply(): Promise<StockProductType[]> {
   try {
     const rows = await sql`SELECT * FROM "FieldSupply"`;
     return rows as StockProductType[];
@@ -11,9 +11,42 @@ export async function getAllFieldSupply(): Promise<StockProductType[]> {
     console.error("Error fetching field supplies:", error);
     throw new Error("Failed to fetch field supplies");
   }
+} */
+
+export async function getProduct(
+  productId?: number,
+): Promise<{ id: number; crop: string; productnature_id: number }[]> {
+  try {
+    let rows;
+
+    if (productId) {
+      // Filter by productId if provided
+      rows = await sql`
+        SELECT id, crop, "productnature_id"
+        FROM "FieldSupply"
+        WHERE "productnature_id" = ${productId};
+      `;
+    } else {
+      // Otherwise return all
+      rows = await sql`
+        SELECT id, crop, "productnature_id"
+        FROM "FieldSupply";
+      `;
+    }
+
+    // Map rows to the desired shape
+    return rows.map((row: any) => ({
+      id: row.id,
+      crop: row.crop,
+      productnature_id: row.productnature_id,
+    }));
+  } catch (error: any) {
+    console.error("Error fetching field supplies:", error);
+    throw new Error("Failed to fetch field supplies");
+  }
 }
 
-export async function getFieldGrades(): Promise<FieldSupply[]> {
+/* export async function getFieldGrades(): Promise<FieldSupply[]> {
   try {
     const rows =
       await sql`SELECT * FROM "FieldSupply" WHERE productnature_id = 1`;
@@ -34,3 +67,4 @@ export async function getFactoryGrades(): Promise<FactorySupply[]> {
     throw new Error("Failed to fetch field grades");
   }
 }
+ */

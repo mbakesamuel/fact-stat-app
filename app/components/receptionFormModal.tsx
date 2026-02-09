@@ -12,8 +12,9 @@ import {
 } from "@/components/ui/select";
 import { Save } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import { FieldSupply, Reception, SupplyUnit } from "@/lib/types";
+import { Reception, ProductType, SupplyUnit } from "@/lib/types";
 import { formatDateForInput } from "@/lib/HelperFunctions";
+import { SupplySourceCheckbox } from "./supplySource";
 
 export default function ReceptionFormModal({
   reception,
@@ -25,9 +26,10 @@ export default function ReceptionFormModal({
   reception: Reception | null;
   onClose: () => void;
   onSubmit: (formData: any) => void;
-  fieldSupplies: FieldSupply[];
+  fieldSupplies: ProductType[];
   supplyUnits: SupplyUnit[];
 }) {
+  const [selectedSources, setSelectedSources] = useState<number | null>(null);
   const [formData, setFormData] = useState<Reception>({
     id: reception?.id,
     operation_date: reception?.operation_date
@@ -62,8 +64,18 @@ export default function ReceptionFormModal({
           />
         </div>
 
+        <div>
+          <Label htmlFor="supply_source">Supply Source</Label>
+          <div className="mt-2">
+            <SupplySourceCheckbox
+              value={selectedSources}
+              onChange={setSelectedSources}
+            />
+          </div>
+        </div>
+
         <div className="space-y-2">
-          <Label htmlFor="grade">Crop Grade</Label>
+          <Label htmlFor="grade">Select Product</Label>
           <Select
             value={formData.field_grade_id}
             onValueChange={(value) => handleChange("field_grade_id", value)} //notice here we pass value directly unlike in Input
@@ -83,7 +95,7 @@ export default function ReceptionFormModal({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="supply_unit">Supply Unit</Label>
+          <Label htmlFor="supply_unit">Select Supply Unit</Label>
           <Select
             value={formData.supply_unit_id}
             onValueChange={(value) => handleChange("supply_unit_id", value)}
@@ -93,29 +105,32 @@ export default function ReceptionFormModal({
               <SelectValue placeholder="Select supply unit" />
             </SelectTrigger>
             <SelectContent>
-              {supplyUnits.map((unit) => (
-                <SelectItem key={unit.id} value={String(unit.id)}>
-                  {unit.SupplyUnit}
-                </SelectItem>
-              ))}
+              {supplyUnits
+                .filter((unit) =>
+                  !selectedSources
+                    ? true
+                    : Number(unit.sub_unit_id === selectedSources),
+                )
+                .map((unit) => (
+                  <SelectItem key={unit.id} value={String(unit.id)}>
+                    {unit.SupplyUnit}
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
         </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="qty_crop">Quantity (tons)</Label>
-          <Input
-            id="qty_crop"
-            type="number"
-            step="0.01"
-            value={formData.qty_crop}
-            onChange={(e) => handleChange("qty_crop", Number(e.target.value))}
-            required
-            placeholder="0.00"
-          />
-        </div>
       </div>
-
+      <div className="space-y-2">
+        <Label htmlFor="qty_crop">Quantity (tons)</Label>
+        <Input
+          id="qty_crop"
+          type="number"
+          value={formData.qty_crop}
+          onChange={(e) => handleChange("qty_crop", Number(e.target.value))}
+          required
+          placeholder="0.00"
+        />
+      </div>
       <div className="flex justify-end gap-3 pt-4">
         <Button type="button" variant="outline" onClick={onClose}>
           Cancel
