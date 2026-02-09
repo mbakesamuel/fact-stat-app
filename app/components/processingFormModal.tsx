@@ -10,7 +10,7 @@ import {
 import { X, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { FactorySupply, Processing } from "@/lib/types";
+import { Processing, ProductType } from "@/lib/types";
 import { useState } from "react";
 import { formatDateForInput } from "@/lib/HelperFunctions";
 
@@ -18,14 +18,14 @@ export default function ProcessingFormModal({
   processing,
   onClose,
   onSubmit,
-  factoryGrades,
+  products,
   factoryId,
   userId,
 }: {
   processing: Processing | null;
   onClose: () => void;
   onSubmit: (formData: Processing) => void;
-  factoryGrades: FactorySupply[];
+  products: ProductType[];
   factoryId: string;
   userId: string;
 }) {
@@ -82,7 +82,7 @@ export default function ProcessingFormModal({
               <SelectValue placeholder="Select grade" />
             </SelectTrigger>
             <SelectContent>
-              {factoryGrades.map((grade) => (
+              {products.map((grade) => (
                 <SelectItem key={String(grade.id)} value={String(grade.id)}>
                   {grade.crop}
                 </SelectItem>

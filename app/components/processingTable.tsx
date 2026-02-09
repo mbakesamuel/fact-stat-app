@@ -8,13 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Factory,
-  FactorySupply,
-  Processing,
-  Reception,
-  StockProductType,
-} from "@/lib/types";
+import { Factory, Processing, Reception, ProductType } from "@/lib/types";
 import { useState } from "react";
 import { FactoryFilter } from "./factoryFilter";
 import { Button } from "@/components/ui/button";
@@ -56,7 +50,7 @@ export default function ProcessingTable({
   processing: Processing[];
   factoryId: string;
   factories: Factory[];
-  products: StockProductType[];
+  products: ProductType[];
   initialPeriod: "day" | "week" | "month" | "year";
   initialData: any[]; //any because the table can carry any type of data since its dynamic.
   userId: string;
@@ -163,33 +157,6 @@ export default function ProcessingTable({
           </p>
         </div>
       </div>
-
-      {/* Processing form dialog form */}
-      <Dialog open={showProcessingModal} onOpenChange={setShowProcessingModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingProcessing ? "Edit Processing" : "New Processing"}
-            </DialogTitle>
-          </DialogHeader>
-          <ProcessingFormModal
-            processing={editingProcessing}
-            onClose={handleCloseForm}
-            onSubmit={async (formData) => {
-              if (editingProcessing) {
-                await handleReception("update", formData, editingProcessing.id);
-              } else {
-                await handleReception("create", formData);
-              }
-              setShowProcessingModal(false);
-              setEditingProcessing(null);
-            }}
-            factoryGrades={products}
-            factoryId={factoryId}
-            userId={userId}
-          />
-        </DialogContent>
-      </Dialog>
 
       {/* Filter */}
       <Card className="glass-effect border-none shadow-lg">
@@ -419,6 +386,33 @@ export default function ProcessingTable({
           />
         }
       </CardContent>
+
+      {/* Processing form dialog form */}
+      <Dialog open={showProcessingModal} onOpenChange={setShowProcessingModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {editingProcessing ? "Edit Processing" : "New Processing"}
+            </DialogTitle>
+          </DialogHeader>
+          <ProcessingFormModal
+            processing={editingProcessing}
+            onClose={handleCloseForm}
+            onSubmit={async (formData) => {
+              if (editingProcessing) {
+                await handleReception("update", formData, editingProcessing.id);
+              } else {
+                await handleReception("create", formData);
+              }
+              setShowProcessingModal(false);
+              setEditingProcessing(null);
+            }}
+            products={products}
+            factoryId={factoryId}
+            userId={userId}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* delete dialog */}
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
