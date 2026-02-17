@@ -1,6 +1,14 @@
 import { LucideIcon } from "lucide-react";
 
-// types.ts
+export interface Data {
+  factory_name: string;
+}
+
+export interface Roles {
+  id: number;
+  role: String;
+}
+
 export interface Reception {
   id?: string | undefined;
   operation_date: string; // ISO date string
@@ -15,17 +23,6 @@ export interface Factory {
   id: number;
   factory_name: string;
 }
-
-/* export interface FieldSupply {
-  id: string;
-  crop: string;
-}
-
-export interface FactorySupply {
-  id: string;
-  crop: string;
-} */
-
 export interface ProductType {
   id: number;
   crop: string;
@@ -47,7 +44,7 @@ export interface Processing {
   user_id?: string;
 }
 
-export interface Factories {
+export interface Factory {
   id: number;
   factory_name: string;
 }
@@ -213,4 +210,9 @@ export type ShipmentLoadingDetails = {
   sealNo: string;
   tallyNo: string;
   qty: number;
+};
+
+export type StockType = {
+  unprocessed: Record<string, number>;
+  processed: Record<string, number>;
 };

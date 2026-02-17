@@ -10,27 +10,30 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Save } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { getDailyTotals } from "../actions/stockTransactionActions";
 
 export default function StockFormModal({
   transaction,
   products,
   onClose,
   onSubmit,
+  factoryId,
 }: {
   transaction: Transaction | null;
   products: ProductType[];
   onClose: () => void;
   onSubmit: (formData: any) => void;
+  factoryId: string;
 }) {
   const [formData, setFormData] = useState<Transaction>({
     id: transaction?.id || "",
     stock_type: transaction?.stock_type || "",
     trans_date: transaction?.trans_date
-      ? formatDateForInput(transaction.trans_date)
-      : formatDateForInput(new Date().toISOString()),
+      ? formatDateForInput(transaction.trans_date) //formatDateForInput(new Date().toISOString())
+      : "",
     factory_id: transaction?.factory_id || "",
     product_id: transaction?.product_id || "",
     transaction_desc: transaction?.transaction_desc || "",
@@ -54,6 +57,33 @@ export default function StockFormModal({
     e.preventDefault();
     onSubmit(formData);
   }
+
+ const [
+    loadingTotals,
+    setLoadingTotals,
+  ] = useState(false);
+
+  useEffect(() => {
+    async function fetchTotals() {
+      if (formData.trans_date && formData.stock_type && formData.product_id) {
+        setLoadingTotals(true);
+        try {
+          const qty = await getDailyTotals({
+            date: formData.trans_date,
+            productId: formData.product_id,
+            factoryId: factoryId,
+          });
+          setFormData((prev) => ({ ...prev, qty }));
+        } catch (err) {
+          console.error("Failed to fetch totals", err);
+        } finally {
+          setLoadingTotals(false);
+        }
+      }
+    }
+    fetchTotals();
+  }, [formData.trans_date, formData.stock_type, formData.product_id]);
+
   return (
     <div>
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -166,7 +196,7 @@ export default function StockFormModal({
           </Button>
           <Button
             type="submit"
-            className="bg-linear-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700"
+            className="bg-linear-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700"
           >
             <Save className="w-4 h-4 mr-2" />
             save

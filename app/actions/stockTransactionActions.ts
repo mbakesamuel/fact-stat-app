@@ -89,14 +89,19 @@ export async function createTransaction(
 ) {
   try {
     const [row] = await sql`
-    INSERT INTO "StockTransaction"
-      ("transDate", "tbl_FactoryId", "tbl_FieldSupplyId",
-       "transDescription", "transMode", "qty", "createdAt", "updatedAt", "stockType")
-    VALUES
-      (${payload.trans_date}, ${factoryId}, ${payload.product_id},
-       ${payload.transaction_desc}, ${payload.trans_mode}, ${payload.qty}, NOW(), NOW(), ${payload.stock_type})
-    RETURNING *;
-  `;
+      INSERT INTO "StockTransaction"
+        ("trans_date", "factory_id", "field_supply_id",
+         "trans_description", "trans_mode", "qty", "created_at", "updated_at", "stock_type", "source")
+      VALUES
+        (${payload.trans_date}, ${factoryId}, ${payload.product_id},
+         ${payload.transaction_desc}, ${payload.trans_mode}, ${payload.qty}, NOW(), NOW(), ${payload.stock_type}, 'MANUAL')
+      ON CONFLICT (trans_date, factory_id, field_supply_id, stock_type, trans_mode, source)
+      DO UPDATE SET
+        qty = "StockTransaction".qty + EXCLUDED.qty,
+        updated_at = NOW()
+      RETURNING *;
+    `;
+
     return row as Transaction;
   } catch (error) {
     console.error("Error creating transaction:", error);
@@ -173,4 +178,45 @@ export async function getLastTransactionDate(
     console.error("Error fetching last transaction date:", error);
     return null;
   }
+}
+
+//Action to compute daily crop reception/processing totals by product
+export async function getDailyTotals({
+  date,
+  productId,
+  factoryId,
+}: {
+  date: string;
+  productId: string;
+  factoryId: string;
+}) {
+  const result = await sql`
+  SELECT Round(COALESCE(SUM(qty_crop),0)) AS total
+  FROM "CropReception"
+  WHERE "operation_date" = ${date}
+  AND "field_grade_id" = ${productId}
+  AND "factory_id" = ${factoryId}`;
+  return result[0]?.total || 0;
+}
+
+//stock balances
+export async function getStockBalances(factoryId?: number) {
+  const result = await sql`
+    SELECT 
+      factory_id,    
+      crop as product,
+      stock_type,
+      SUM(
+        CASE 
+          WHEN trans_mode = 'IN' THEN qty
+          WHEN trans_mode = 'OUT' THEN -qty
+          ELSE 0
+        END
+      ) AS net_stock
+    FROM "StockTransaction" st INNER JOIN "FieldSupply" fs ON st.field_supply_id=fs.id
+    ${factoryId ? sql`WHERE factory_id = ${factoryId}` : sql``}
+    GROUP BY factory_id, fs.crop, stock_type
+  `;
+
+  return result;
 }

@@ -11,13 +11,7 @@ import { ArrowDownCircle, ArrowUpCircle, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Factory,
-  FactoryStock,
-  StockLevel,
-  ProductType,
-  Transaction,
-} from "@/lib/types";
+import { Factory, ProductType, Transaction, StockType } from "@/lib/types";
 import {
   Table,
   TableHeader,
@@ -26,41 +20,40 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import { getFactoryName, getGradeName } from "@/lib/HelperFunctions";
+import {
+  getFactoryName,
+  getGradeName,
+  transformBalances,
+} from "@/lib/HelperFunctions";
 import StockFormModal from "./stockFormModal";
 import {
   createTransaction,
   deleteTransaction,
+  getStockBalances,
   updateTransaction,
 } from "../actions/stockTransactionActions";
 import { FactoryFilter } from "./factoryFilter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import Pagination from "./pagination";
+import { useAppContext } from "../context/appContext";
+import { useTransition } from "react";
 
 export default function StockTransactionTable({
   factories,
   products,
   intitialData,
-  factoryId,
-  userId,
-  role,
-  latestTransDate,
 }: {
   factories: Factory[];
   products: ProductType[];
   intitialData: Transaction[];
-  factoryId: string;
-  userId: string;
-  role: string;
-  latestTransDate: string | null;
 }) {
+  //context provider
+  const { userId, factoryId, role } = useAppContext();
+
   const [showFormModal, setShowFormModal] = useState(false);
-  const [stockLevels, setStockLevels] = useState<StockLevel[]>([]);
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
-
-  const [scope, setScope] = useState<"factory" | "All">("factory");
 
   const [data, setData] = useState<Transaction[]>(intitialData);
   const [filterFactory, setFilterFactory] = useState("All");
@@ -68,26 +61,33 @@ export default function StockTransactionTable({
   const [deleteId, setDeleteId] = useState<string | undefined>();
   const [filterType, setFilterType] = useState<string | number>("All");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 5;
+
+  const [stockDict, setStockDict] = useState<StockType>({
+    unprocessed: {
+      Latex: 0,
+      Cuplumps: 0,
+      Coagulum: 0,
+      Scrap: 0,
+    },
+    processed: {
+      RSS: 0,
+      "CNR 3L": 0,
+      "CNR 10": 0,
+    },
+  });
+
+  const [isPending, startTransition] = useTransition();
+
+  const fetchBalances = async function fetchBalances() {
+    const data = await getStockBalances(Number(factoryId));
+    const dict = transformBalances(data);
+    setStockDict(dict);
+  };
 
   useEffect(() => {
-    const levels: Record<string, StockLevel> = {};
-    data.forEach((t) => {
-      const key = `${t.factory_id}-${t.product_id}-${t.stock_type}`;
-      if (!levels[key]) {
-        levels[key] = {
-          factory_id: t.factory_id,
-          grade_id: t.product_id,
-          stock_type: t.stock_type,
-          quantity: 0,
-        };
-      }
-      const qty = parseFloat(String(t.qty)) || 0;
-      levels[key].quantity += t.trans_mode === "IN" ? qty : -qty;
-    });
-
-    setStockLevels(Object.values(levels));
-  }, [data]);
+    fetchBalances();
+  }, [factoryId]);
 
   useEffect(() => {
     if (role === "clerk" || role === "ium") {
@@ -245,124 +245,12 @@ export default function StockTransactionTable({
     currentPage * itemsPerPage,
   );
 
-  //function aggregating the stock balances by grades.
-  function aggregateByFactory(
-    stockLevels: StockLevel[],
-    products: { id: number | string; crop: string }[],
-    role: string,
-    factoryId?: string,
-  ): {
-    byFactory: Record<
-      string,
-      FactoryStock & { totalUnprocessed: number; totalProcessed: number }
-    >;
-    overall?: FactoryStock & {
-      totalUnprocessed: number;
-      totalProcessed: number;
-    };
-  } {
-    const idToCrop: Record<string, string> = products.reduce(
-      (acc, p) => {
-        acc[String(p.id)] = String(p.crop).trim().toLowerCase();
-        return acc;
-      },
-      {} as Record<string, string>,
-    );
-
-    const result: Record<
-      string,
-      FactoryStock & { totalUnprocessed: number; totalProcessed: number }
-    > = {};
-
-    const ensureFactory = (factoryKey: string) => {
-      if (!result[factoryKey]) {
-        result[factoryKey] = {
-          up: { latex: 0, cuplump: 0, scrap: 0 },
-          p: { rss: 0, "cnr 3l": 0, "cnr 10": 0 },
-          totalUnprocessed: 0,
-          totalProcessed: 0,
-        };
-      }
-      return result[factoryKey];
-    };
-
-    const overall: FactoryStock & {
-      totalUnprocessed: number;
-      totalProcessed: number;
-    } = {
-      up: { latex: 0, cuplump: 0, scrap: 0 },
-      p: { rss: 0, "cnr 3l": 0, "cnr 10": 0 },
-      totalUnprocessed: 0,
-      totalProcessed: 0,
-    };
-
-    for (const s of stockLevels) {
-      const factoryKey = String(s.factory_id);
-      const crop = idToCrop[String(s.grade_id)] || "";
-      const qty = Number(s.quantity) || 0;
-      const stockType = String(s.stock_type || "")
-        .trim()
-        .toUpperCase();
-
-      const factory = ensureFactory(factoryKey);
-
-      if (stockType === "UNPROCESSED") {
-        if (crop === "latex") {
-          factory.up.latex += qty;
-          overall.up.latex += qty;
-        } else if (crop === "cuplump") {
-          factory.up.cuplump += qty;
-          overall.up.cuplump += qty;
-        } else if (crop === "scrap") {
-          factory.up.scrap += qty;
-          overall.up.scrap += qty;
-        }
-        factory.totalUnprocessed += qty;
-        overall.totalUnprocessed += qty;
-      } else if (stockType === "PROCESSED") {
-        if (crop === "rss") {
-          factory.p.rss += qty;
-          overall.p.rss += qty;
-        } else if (crop === "cnr 3l") {
-          factory.p["cnr 3l"] += qty;
-          overall.p["cnr 3l"] += qty;
-        } else if (crop === "cnr 10") {
-          factory.p["cnr 10"] += qty;
-          overall.p["cnr 10"] += qty;
-        }
-        factory.totalProcessed += qty;
-        overall.totalProcessed += qty;
-      }
-    }
-
-    if (role === "clerk" || role === "ium") {
-      if (factoryId) {
-        const key = String(factoryId);
-
-        return {
-          byFactory: { [key]: result[key] ?? ensureFactory(key) },
-        };
-      }
-
-      return { byFactory: result };
-    } else {
-      return { byFactory: result, overall };
-    }
-  }
-
-  const { byFactory, overall } = aggregateByFactory(
-    stockLevels,
-    products,
-    role,
-    factoryId,
-  );
-
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">
-            Stock Management
+            Rubber Stock Management
           </h1>
           <p className="text-slate-600 mt-1">
             Track rubber inventory transactions
@@ -401,163 +289,22 @@ export default function StockTransactionTable({
               } else {
                 await handleTransaction("create", formData);
               }
+
               setShowFormModal(false);
               setEditingTransaction(null);
+
+              //Refresh Balances as a transition - non urgent
+              startTransition(() => {
+                fetchBalances();
+              });
             }}
+            factoryId={factoryId}
           />
+          {isPending && (
+            <p className="text-sm text-gray-500">Refreshing Balances</p>
+          )}
         </DialogContent>
       </Dialog>
-
-      {/* summary cards */}
-      <Card className="flex flex-col justify-center p-4 sticky top-4 z-30 self-start">
-        <h1>{`Current Stock Balances as at ${latestTransDate}`}</h1>
-        {role !== "clerk" && role !== "ium" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Unprocessed Stocks */}
-            <Card className="glass-effect border-none shadow-lg">
-              <CardContent className="p-6">
-                <p className="text-xl font-bold text-slate-900">
-                  All factories - Unprocessed Stocks
-                </p>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center justify-center">
-                    <div className="flex flex-col md:flex-row justify-between gap-8">
-                      <div className="flex flex-col md:flex-row justify-between gap-8">
-                        <p className="text-xl font-bold">
-                          Latex:{" "}
-                          <span className="text-2xl font-bold text-emerald-600">
-                            {(overall?.up.latex ?? 0).toLocaleString()}
-                          </span>{" "}
-                        </p>
-                        <p className="text-xl font-bold">
-                          Cuplump:{" "}
-                          <span className="text-2xl fond-bold text-emerald-600">
-                            {(overall?.up.cuplump ?? 0).toLocaleString()}
-                          </span>
-                        </p>
-                        <p className="text-xl font-bold">
-                          Scrap:
-                          <span>
-                            {(overall?.up.scrap ?? 0).toLocaleString()}
-                          </span>
-                        </p>
-                      </div>
-                      <div>
-                        <p>
-                          Total:{" "}
-                          {(overall?.totalUnprocessed ?? 0).toLocaleString()}{" "}
-                          tons
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Processed Stocks */}
-            <Card className="glass-effect border-none shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center justify-center">
-                      <p className="text-xl font-bold text-slate-900">
-                        All Factories - Processed Stocks
-                      </p>
-                    </div>
-                    <p>RSS: {(overall?.p.rss ?? 0).toLocaleString()}</p>
-                    <p>
-                      CNR 3L: {(overall?.p["cnr 3l"] ?? 0).toLocaleString()}
-                    </p>
-                    <p>
-                      CNR 10: {(overall?.p["cnr 10"] ?? 0).toLocaleString()}
-                    </p>
-                    <p>
-                      Total: {(overall?.totalProcessed ?? 0).toLocaleString()}
-                      tons
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Unprocessed Stocks */}
-            <Card className="glass-effect border-none shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center justify-center">
-                      <p className="text-xl font-bold text-slate-900">
-                        Stocks By Grade
-                      </p>
-                    </div>
-                    <p>Latex: {byFactory?.[factoryId].up?.latex}</p>
-                    <p>
-                      Cuplump:{" "}
-                      {(
-                        byFactory?.[filterFactory]?.up?.cuplump ?? 0
-                      ).toLocaleString()}
-                    </p>
-                    <p>
-                      Scrap:{" "}
-                      {(
-                        byFactory?.[filterFactory]?.up?.scrap ?? 0
-                      ).toLocaleString()}
-                    </p>
-                    <p>
-                      Total:{" "}
-                      {(
-                        byFactory?.[filterFactory]?.totalUnprocessed ?? 0
-                      ).toLocaleString()}{" "}
-                      tons
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Processed Stocks */}
-            <Card className="glass-effect border-none shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center justify-center">
-                      <p className="text-xl font-bold text-slate-900">
-                        Stocks By Grade
-                      </p>
-                    </div>
-                    <p>
-                      RSS:{" "}
-                      {(byFactory?.[factoryId]?.p?.rss ?? 0).toLocaleString()}
-                    </p>
-                    <p>
-                      CNR 3L:
-                      {(
-                        byFactory?.[factoryId]?.p?.["cnr 3l"] ?? 0
-                      ).toLocaleString()}
-                    </p>
-                    <p>
-                      CNR 10:
-                      {(
-                        byFactory?.[factoryId]?.p?.["cnr 10"] ?? 0
-                      ).toLocaleString()}
-                    </p>
-                    <p>
-                      Total:
-                      {(
-                        byFactory?.[factoryId]?.totalProcessed ?? 0
-                      ).toLocaleString()}
-                      tons
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-      </Card>
 
       {/* filter : will not be needed by userRole: clerk and iu : who a factory limited.*/}
       {role !== "clerk" && role !== "ium" && (
@@ -568,8 +315,98 @@ export default function StockTransactionTable({
         />
       )}
 
+      {/* summary cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {/* Unprocessed Stocks */}
+        <Card className="border border-slate-200 shadow bg-slate-50">
+          <CardContent className="p-3">
+            <div className="flex flex-col gap-1">
+              <p className="text-lg font-bold text-slate-900 text-left">
+                Unprocessed Stocks
+              </p>
+              <div className="flex flex-col md:flex-row space-y-1 gap-4 justify-between p-4 bg-emerald-50">
+                <p className="text-lg flex justify-between gap-5">
+                  <span>Latex:</span>
+                  <span className="text-emerald-600 font-semibold">
+                    {stockDict.unprocessed.Latex.toLocaleString()}
+                  </span>
+                </p>
+                <p className="text-lg flex justify-between gap-5">
+                  <span>Cuplumps:</span>
+                  <span className="text-emerald-600 font-semibold">
+                    {stockDict.unprocessed.Cuplumps.toLocaleString()}
+                  </span>
+                </p>
+                <p className="text-lg flex justify-between gap-5">
+                  <span>Coagulum:</span>
+                  <span className="text-emerald-600 font-semibold">
+                    {stockDict.unprocessed.Coagulum.toLocaleString()}
+                  </span>
+                </p>
+                <p className="text-lg flex justify-between gap-5">
+                  <span>Scrap:</span>
+                  <span className="text-emerald-600 font-semibold">
+                    {stockDict.unprocessed.Scrap.toLocaleString()}
+                  </span>
+                </p>
+              </div>
+              <p className="text-lg font-bold text-center border-t border-b pt-1">
+                Total:{" "}
+                {(
+                  stockDict.unprocessed.Latex +
+                  stockDict.unprocessed.Cuplumps +
+                  stockDict.unprocessed.Coagulum +
+                  stockDict.unprocessed.Scrap
+                ).toLocaleString()}{" "}
+                tons
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Processed Stocks */}
+        <Card className="border border-slate-200 shadow bg-blue-50">
+          <CardContent className="pl-8">
+            <div className="flex flex-col gap-1">
+              <p className="text-lg font-bold text-slate-900 text-left mb-2">
+                Processed Stocks
+              </p>
+              <div className="flex flex-col md:flex-row space-y-1 gap-4 justify-between p-4 bg-emerald-50">
+                <p className="text-lg flex justify-between gap-10">
+                  <span>RSS:</span>
+                  <span className="text-blue-600 font-semibold">
+                    {stockDict.processed.RSS.toLocaleString()}
+                  </span>
+                </p>
+                <p className="text-lg flex justify-between gap-10">
+                  <span>CNR 3L:</span>
+                  <span className="text-blue-600 font-semibold">
+                    {stockDict.processed["CNR 3L"].toLocaleString()}
+                  </span>
+                </p>
+                <p className="text-lg flex justify-between gap-10">
+                  <span>CNR 10:</span>
+                  <span className="text-blue-600 font-semibold">
+                    {stockDict.processed["CNR 10"].toLocaleString()}
+                  </span>
+                </p>
+              </div>
+              <p className="text-lg font-bold mt-2 text-center border-t border-b pt-1">
+                Total:{" "}
+                {(
+                  stockDict.processed.RSS +
+                  stockDict.processed["CNR 3L"] +
+                  stockDict.processed["CNR 10"]
+                ).toLocaleString()}{" "}
+                tons
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* transactions history table */}
-      <Card className="glass-effect border-none shadow-lg overflow-hidden">
+      <Card className="border shadow-lg overflow-hidden">
         <CardHeader className="border-b border-slate-100">
           <CardTitle>Transaction History</CardTitle>
         </CardHeader>
@@ -757,6 +594,8 @@ export default function StockTransactionTable({
                     setData(data.filter((rec) => rec.id !== deleteId));
                   }
                 }
+                //fetch balances
+                await fetchBalances();
                 setConfirmOpen(false);
                 setDeleteId(undefined);
               }}

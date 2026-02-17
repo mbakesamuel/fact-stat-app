@@ -2,6 +2,7 @@
 "use server";
 import { sql } from "@/lib/db";
 import { Reception } from "@/lib/types";
+import { createTransaction } from "./stockTransactionActions";
 
 export async function getAllReceptions(
   factoryId?: string,
@@ -90,26 +91,45 @@ export async function getReceptionSummary(
   }
 }
 
-// CREATE
+//create
 export async function createReception(
   data: Reception,
   factoryId: string,
   userId: string,
 ): Promise<Reception | undefined> {
   try {
+    // 1. Insert into CropReception
     const [row] = await sql`
       INSERT INTO "CropReception" (
         operation_date, factory_id, field_grade_id, supply_unit_id, qty_crop, user_id
       )
       VALUES (
-        ${data.operation_date}, ${Number(factoryId)}, ${data.field_grade_id ? Number(data.field_grade_id) : null},
-        ${data.supply_unit_id ? Number(data.supply_unit_id) : null}, ${data.qty_crop}, ${userId}
+        ${data.operation_date}, ${Number(factoryId)}, 
+        ${data.field_grade_id ? Number(data.field_grade_id) : null},
+        ${data.supply_unit_id ? Number(data.supply_unit_id) : null}, 
+        ${data.qty_crop}, ${userId}
       )
-      RETURNING * 
+      RETURNING *;
     `;
+
+    // 2. Update StockTransaction ledger (Reception flow enforces uniqueness)
+    await sql`
+      INSERT INTO "StockTransaction"
+        ("trans_date", "factory_id", "field_supply_id",
+         "trans_description", "trans_mode", "qty", "created_at", "updated_at", "stock_type", "source")
+      VALUES
+        (${data.operation_date}, ${factoryId}, ${data.field_grade_id},
+         ${`Total crop received on ${data.operation_date}`}, 'IN', ${data.qty_crop}, NOW(), NOW(), 'UNPROCESSED', 'RECEPTION')
+      ON CONFLICT (trans_date, factory_id, field_supply_id, stock_type, trans_mode, source)
+      DO UPDATE SET
+        qty = "StockTransaction".qty + EXCLUDED.qty,
+        updated_at = NOW();
+    `;
+
     return row as Reception;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating reception:", error);
+    throw new Error(error.message);
   }
 }
 

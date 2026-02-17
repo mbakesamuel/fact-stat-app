@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { ArrowBigRight, Move } from "lucide-react";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -19,15 +20,14 @@ export default function HomeScreen() {
         <h1 className="flex flex-col text-2xl md:text-8xl font-bold">
           Group Rubber Statistics
         </h1>
-        <h2 className="font-bold text-lg md:text-4xl italic underline text-emerald-500">
-          Application
-        </h2>
+      
       </div>
 
       <button
-        className="py-2 px-4 rounded-lg hover:bg-green-600 bg-green-500 text-white font-semibold transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75"
-        onClick={() => router.push("/dashboard")}
+        className="flex gap-4 py-2 px-4 rounded-lg hover:bg-green-600 bg-green-500 text-white font-semibold transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75"
+        onClick={() => router.push("/sign-in")}
       >
+        <ArrowBigRight />
         sign in
       </button>
     </div>

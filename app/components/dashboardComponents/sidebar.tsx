@@ -12,7 +12,6 @@ import {
   Building2,
   TrendingUp,
   X,
-  type LucideIcon,
   Sticker,
   Ship,
   LoaderPinwheel,
@@ -29,20 +28,27 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { NavItem } from "@/lib/types";
+import { useClerk } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
+import { Spinner } from "../spinner";
 
 export default function SidebarClient() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const pathname = usePathname();
 
-  // Replace this with your real user/session data
-  const user = {
-    id: 1,
-    fullName: "Mbake Samuel",
-    emailAddress: "purupela@gmail.com",
-    role: "admin",
-  };
+  const { signOut } = useClerk();
+  const { user } = useUser();
 
-  const isAdmin = user?.role === "admin";
+  if (!user) {
+    return (
+      <div className="flex items-center space-x-2">
+        <Spinner className="text-emeral-600 size-6" />
+        <span>Loading...</span>
+      </div>
+    );
+  }
+
+  const isAdmin = (user?.publicMetadata.role as string) === "admin";
 
   const navigation: NavItem[] = [
     {
@@ -88,20 +94,20 @@ export default function SidebarClient() {
 
   // Role-based filtering
   const filteredNavigation = navigation.filter((item) =>
-    item.roles.includes(user.role || ""),
+    item.roles.includes((user.publicMetadata.role as string) || ""),
   );
 
+  //clerk signout
   const handleLogout = async () => {
     try {
-      // Implement sign out logic here
-      // await signOut();
+      await signOut();
+      window.location.href = "/";
     } catch (error) {
       console.error("Error signing out", error);
     }
   };
 
   return (
-    /*   <div className="min-h-screen bg-linear-to-br from-slate-50 via-emerald-50/30 to-slate-50"> */
     <>
       <style>{`
         :root {
@@ -136,7 +142,7 @@ export default function SidebarClient() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-bold bg-linear-to-r from-emerald-600 to-emerald-800 bg-clip-text text-transparent">
-                  Rubber Statistics{" "}
+                  Group Rubber Stats
                 </h1>
                 <p className="text-xs text-slate-500 mt-1">
                   Management Application
@@ -164,7 +170,7 @@ export default function SidebarClient() {
                     {user.fullName || "User"}
                   </p>
                   <p className="text-xs text-slate-500 truncate">
-                    {user.emailAddress}
+                    {user.primaryEmailAddress?.emailAddress}
                   </p>
                   <span
                     className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full mt-1 ${
@@ -173,7 +179,7 @@ export default function SidebarClient() {
                         : "bg-blue-100 text-blue-700"
                     }`}
                   >
-                    {user.role?.toUpperCase()}
+                    {user.publicMetadata.role as string}
                   </span>
                 </div>
               </div>
@@ -283,7 +289,7 @@ export default function SidebarClient() {
           </button>
 
           <h1 className="text-lg font-bold bg-linear-to-r from-emerald-600 to-emerald-800 bg-clip-text text-transparent">
-            AgriFlow
+            G-R STATS
           </h1>
 
           <div className="flex items-center gap-3">

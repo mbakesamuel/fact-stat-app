@@ -14,10 +14,11 @@ import {
   TableHead,
   TableBody,
   TableCell,
+  TableFooter,
 } from "@/components/ui/table";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ClipboardList, Filter, Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 
 import { Factory, Reception, ProductType, SupplyUnit } from "@/lib/types";
@@ -33,39 +34,28 @@ import {
 import ReceptionFormModal from "./receptionFormModal";
 import { FactoryFilter } from "./factoryFilter";
 import {
-  formatPeriod,
   getFactoryName,
   getGradeName,
   getSupplyUnitName,
 } from "@/lib/HelperFunctions";
 import ReceptionCard from "./receptionCard";
 import { ProductFilter } from "./productFilter";
+import { useAppContext } from "../context/appContext";
 
 export default function ReceptionTable({
-  role,
-  userId,
-  factoryId,
-  initialData,
-  isSummary,
-  initialPeriod,
-  receptions,
+  initialReception,
   factories,
   products,
   supplyUnits,
 }: {
-  role: string;
-  userId: string;
-  factoryId: string;
-  initialData: any[]; //any because it can daily, weekly, monthly or yearly data with different format.
-  isSummary: boolean;
-  initialPeriod: "day" | "week" | "month" | "year";
-  receptions: Reception[];
+  initialReception: Reception[];
   factories: Factory[];
   products: ProductType[];
   supplyUnits: SupplyUnit[];
 }) {
-  const [data, setData] = useState(initialData);
-  const [period, setPeriod] = useState(initialPeriod);
+  const { userId, factoryId, role } = useAppContext();
+
+  const [reception, setReception] = useState(initialReception);
   const [editingReception, setEditingReception] = useState<Reception | null>(
     null,
   );
@@ -74,27 +64,15 @@ export default function ReceptionTable({
   //delete modal states
   const [deleteId, setDeleteId] = useState<string | undefined>();
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [filterFactory, setFilterFactory] = useState("All");
+
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 5;
 
   //manage filtering state by grade
   const [filterProduct, setFilterProduct] = useState("All");
+  const [filterFactory, setFilterFactory] = useState("All");
 
-  const totalQuantity = isSummary
-    ? data.reduce((sum, row: any) => sum + Number(row.total_quantity || 0), 0)
-    : data.reduce(
-        (sum, reception: any) => sum + Number(reception.qty_crop || 0),
-        0,
-      );
-
-  async function handlePeriodChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const newPeriod = e.target.value as "day" | "week" | "month" | "year";
-    setPeriod(newPeriod);
-    const updated = await getReceptionSummary(newPeriod, factoryId);
-    setData(updated);
-  }
-
+  //managing crud operations
   async function handleReception(
     action: "create" | "update" | "delete",
     payload?: any,
@@ -105,7 +83,7 @@ export default function ReceptionTable({
         const newReception = await createReception(payload, factoryId, userId);
 
         if (newReception) {
-          setData([...data, newReception]);
+          setReception([...reception, newReception]);
         }
         break;
       }
@@ -114,8 +92,8 @@ export default function ReceptionTable({
         if (!id) return;
         const updatedReception = await updateReception(id, payload);
         if (updatedReception) {
-          setData(
-            data.map((rec) =>
+          setReception(
+            reception.map((rec) =>
               rec.id === id ? { ...rec, ...updatedReception } : rec,
             ),
           );
@@ -127,27 +105,46 @@ export default function ReceptionTable({
         if (!id) return;
         const result = await deleteReception(id);
         if (result?.success) {
-          setData(data.filter((rec) => rec.id !== id));
+          setReception(reception.filter((rec) => rec.id !== id));
         }
         break;
       }
     }
   }
 
-  //handling closing of the modal form: - we could still pass incline but better here to make it simple and clean
+  //function to close modal:-set state to false and set the editing state to null so it is empty.
   const handleCloseForm = () => {
     setShowModalForm(false);
     setEditingReception(null);
   };
 
-  const filterteredReception =
-    filterFactory === "All" //filterFactory is the state which initially is equall to : All --No factory is selected show return all receptions
-      ? data
-      : data.filter((r) => String(r.factory_id) === filterFactory);
+  //role based filtering:- filter depending on the role
+  const filteredReception = (() => {
+    if (role === "clerk" || role === "ium") {
+      // Clerks & IUM → filter only by product
+      return filterProduct === "All"
+        ? reception
+        : reception.filter((r) => String(r.field_grade_id) === filterProduct);
+    } else {
+      // Other roles → filter by both factory and product
+      let data = reception;
+
+      /* notice the trick: intitially data=reception. We filter data by factory the result by grade */
+      if (filterFactory !== "All") {
+        data = data.filter((r) => String(r.factory_id) === filterFactory);
+      }
+
+      if (filterProduct !== "All") {
+        data = data.filter((r) => String(r.field_grade_id) === filterProduct);
+      }
+
+      return data; //note that the result is still equal to reception.
+    }
+  })();
 
   //implementing pagination parameters
-  const totalPages = Math.ceil(filterteredReception.length / itemsPerPage);
-  const paginatedReceptions = filterteredReception.slice(
+  const totalPages = Math.ceil(filteredReception.length / itemsPerPage);
+  const paginatedReceptions = filteredReception.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage,
   );
@@ -158,65 +155,84 @@ export default function ReceptionTable({
     return factory ? factory.factory_name : "Unknown Factory";
   };
 
+  const totalQuantity = paginatedReceptions.reduce(
+    (sum, reception: any) => sum + Number(reception.qty_crop || 0),
+    0,
+  );
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Filter */}
-      {role !== "clerk" && role !== "ium" ? (
-        <Card className="glass-effect border-none shadow-lg">
-          <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row justify-between">
-              <FactoryFilter
-                factories={factories}
-                value={filterFactory}
-                onChange={setFilterFactory}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="glass-effect border-none shadow-lg">
-          <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row justify-between">
-              <ProductFilter
-                products={products}
-                value={filterProduct}
-                onChange={setFilterProduct}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* table */}
-      <Card className="glass-effect border-none shadow-lg overflow-hidden p-2">
+      <Card>
         <CardHeader className="border-b border-slate-100">
           <CardTitle className=" flex-col items-center gap-2">
             <div className="flex flex-col gap-4">
-              <h1>
-                <span className="font-bold text-emerald-600 text-2xl uppercase">{`${getFactoryNameById(Number(factoryId))}`}</span>
-              </h1>
-              <div className="flex">
-                <ClipboardList className="w-5 h-5 text-emerald-600" />
-                <span className="text-slate-800">
-                  Managing Crop Deliveries into Factory
-                </span>
-              </div>
+              {(role == "clerk" || role === "ium") && (
+                <h1>
+                  <span className="font-bold text-emerald-600 text-2xl uppercase">
+                    {getFactoryNameById(Number(factoryId))}
+                  </span>
+                </h1>
+              )}
             </div>
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
-          <div className="flex md:justify-end mb-4">
+        <CardContent>
+          <div className="flex">
+            {role === "clerk" || role === "ium" ? (
+              <span className="text-slate-800 leading-relaxed">
+                Managing Crop Deliveries into Factory
+              </span>
+            ) : (
+              <span className="text-slate-800 leading-relaxed">
+                Viewing Crop Recieved at the different Factories
+              </span>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* table */}
+      <Card className="glass-effect border-none shadow-lg overflow-hidden pl-4">
+        <CardHeader>
+          <div className="flex justify-between mb-4 sticky top-17 bg-white z-10">
+            {/* Filter */}
+            {role !== "clerk" && role !== "ium" ? (
+              <div className="flex flex-row justify-between gap-2">
+                <FactoryFilter
+                  factories={factories}
+                  value={filterFactory}
+                  onChange={setFilterFactory}
+                />
+
+                <ProductFilter
+                  products={products}
+                  value={filterProduct}
+                  onChange={setFilterProduct}
+                />
+              </div>
+            ) : (
+              <>
+                <ProductFilter
+                  products={products}
+                  value={filterProduct}
+                  onChange={setFilterProduct}
+                />
+              </>
+            )}
+
             {(role === "clerk" || role === "ium") && (
               <Button
                 onClick={() => setShowModalForm(true)}
-                className="w-full md:w-auto bg-linear-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-emerald-500/30"
+                className="bg-linear-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-emerald-500/30"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 New Reception
               </Button>
             )}
           </div>
-
+        </CardHeader>
+        <CardContent className="p-0">
+          {/* handling table display */}
           <div className="overflow-x-auto">
             <div className="space-y-4 md:hidden">
               {paginatedReceptions.map((reception) => (
@@ -241,30 +257,16 @@ export default function ReceptionTable({
               <Table>
                 <TableHeader>
                   <TableRow className="bg-slate-50">
-                    {isSummary
-                      ? [
-                          <TableHead key="period">Period</TableHead>,
-                          <TableHead key="factory">Factory</TableHead>,
-                          <TableHead key="grade">Grade</TableHead>,
-                          <TableHead key="qty" className="text-right">
-                            Total Quantity (tons)
-                          </TableHead>,
-                        ]
-                      : [
-                          <TableHead key="date">Date</TableHead>,
-                          <TableHead key="factory">Factory</TableHead>,
-                          <TableHead key="grade">Grade</TableHead>,
-                          <TableHead key="supply">Supply Unit</TableHead>,
-                          <TableHead key="qty" className="text-right">
-                            Quantity (tons)
-                          </TableHead>,
-                          <TableHead key="actions">Actions</TableHead>,
-                        ]}
+                    <TableHead key="date">Date</TableHead>
+                    <TableHead key="factory">Factory</TableHead>
+                    <TableHead key="grade">Grade</TableHead>
+                    <TableHead key="supply">Supply Unit</TableHead>
+                    <TableHead key="qty">Quantity (tons)</TableHead>
+                    <TableHead key="actions">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {/* here were displaying a loading state to keep ui busy */}
-                  {!receptions ? (
+                  {!initialReception ? (
                     [...Array(5)].map((_, i) => (
                       <TableRow key={i}>
                         <TableCell>
@@ -289,35 +291,10 @@ export default function ReceptionTable({
                     ))
                   ) : paginatedReceptions.length === 0 ? (
                     <TableRow>
-                      <TableCell
-                        colSpan={isSummary ? 4 : 6}
-                        className="text-center py-8 text-slate-500"
-                      >
+                      <TableCell className="text-center py-8 text-slate-500">
                         No records found
                       </TableCell>
                     </TableRow>
-                  ) : isSummary ? (
-                    paginatedReceptions.map((row: any) => (
-                      <TableRow
-                        key={`${row.factory_id}-${row.field_grade_id}-${row.period}`}
-                        className="hover:bg-slate-50/50 transition-colors"
-                      >
-                        <TableCell>
-                          {formatPeriod(row.period, period)}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {row.factory_name}
-                        </TableCell>
-                        <TableCell>
-                          <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">
-                            {row.field_grade_name}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right font-semibold">
-                          {Number(row.total_quantity).toFixed(2)}
-                        </TableCell>
-                      </TableRow>
-                    ))
                   ) : (
                     paginatedReceptions.map((reception: Reception) => (
                       <TableRow
@@ -350,8 +327,8 @@ export default function ReceptionTable({
                             supplyUnits,
                           )}
                         </TableCell>
-                        <TableCell className="text-right font-semibold">
-                          {reception.qty_crop?.toFixed(2)}
+                        <TableCell className="font-semibold">
+                          {reception.qty_crop?.toLocaleString()}
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
@@ -383,38 +360,17 @@ export default function ReceptionTable({
                     ))
                   )}
                 </TableBody>
-
-                {/* table footer */}
-                <tfoot>
-                  <TableRow className="bg-slate-100 font-semibold">
-                    {isSummary
-                      ? [
-                          <TableCell
-                            key="label"
-                            colSpan={3}
-                            className="text-right font-bold text-lg"
-                          >
-                            Total
-                          </TableCell>,
-                          <TableCell key="value" className="text-right">
-                            {totalQuantity.toFixed(2)}
-                          </TableCell>,
-                        ]
-                      : [
-                          <TableCell
-                            key="label"
-                            colSpan={4}
-                            className="text-right font-bold text-lg"
-                          >
-                            Total
-                          </TableCell>,
-                          <TableCell key="value" className="text-right text-lg">
-                            {totalQuantity.toFixed(2)}
-                          </TableCell>,
-                          <TableCell key="spacer" />,
-                        ]}
+                <TableFooter>
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center font-bold">
+                      Total
+                    </TableCell>
+                    <TableCell className="text-left font-bold">
+                      {totalQuantity.toLocaleString()}
+                    </TableCell>
+                    <TableCell />
                   </TableRow>
-                </tfoot>
+                </TableFooter>
               </Table>
             </div>
           </div>
@@ -446,7 +402,9 @@ export default function ReceptionTable({
                 if (deleteId) {
                   const result = await deleteReception(deleteId);
                   if (result?.success) {
-                    setData(data.filter((rec) => rec.id !== deleteId));
+                    setReception(
+                      reception.filter((rec) => rec.id !== deleteId),
+                    );
                   }
                 }
                 setConfirmOpen(false);
@@ -459,9 +417,9 @@ export default function ReceptionTable({
         </DialogContent>
       </Dialog>
 
-      {/* Reception Modal Form */}
+      {/* Reception Modal */}
       <Dialog open={showModalForm} onOpenChange={setShowModalForm}>
-        <DialogContent className="overflow-y-auto">
+        <DialogContent className="md:w-auto md:h-auto md:overflow-visible w-[90vw] h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingReception ? "Edit Reception" : "New Reception"}

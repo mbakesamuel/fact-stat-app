@@ -2,6 +2,8 @@
 
 import { sql } from "@/lib/db";
 import { Processing } from "@/lib/types";
+import { createTransaction } from "./stockTransactionActions";
+import { gradeMapping } from "@/lib/HelperFunctions";
 
 // Get all processing
 export async function getAllProcessing(
@@ -42,19 +44,110 @@ export async function getAllProcessing(
 }
 
 //create Processing
+/* export async function createProcessing(
+  data: Processing,
+  userId: string,
+  factoryId: string,
+): Promise<Processing | undefined> {
+  try {
+    await sql`BEGIN`;
+
+    const [row] = await sql`
+      INSERT INTO "CropProcessing" (operation_date, factory_id, process_grade_id, qty_proc, user_id)
+      VALUES (${data.operation_date}, ${factoryId}, ${data.process_grade_id}, ${data.qty_proc}, ${userId})
+      RETURNING *
+    `;
+
+    const mappedGrade = gradeMapping[Number(data.process_grade_id)];
+    // Deduct from UNPROCESSED stock (no uniqueness enforcement here)
+    await sql`
+      INSERT INTO "StockTransaction"
+        ("trans_date", "factory_id", "field_supply_id",
+         "trans_description", "trans_mode", "qty", "created_at", "updated_at", "stock_type", "source")
+      VALUES
+        (${data.operation_date}, ${factoryId}, ${mappedGrade},
+         ${`${data.qty_proc} kgs processed on ${data.operation_date}`}, 'OUT', ${data.qty_proc}, NOW(), NOW(), 'UNPROCESSED', 'PROCESSING')
+    `;
+
+    // Add to PROCESSED stock (no uniqueness enforcement here)
+    await sql`
+  INSERT INTO "StockTransaction"
+    ("trans_date", "factory_id", "field_supply_id",
+     "trans_description", "trans_mode", "qty", "created_at", "updated_at", "stock_type", "source")
+  VALUES
+    (${data.operation_date}, ${factoryId}, ${data.process_grade_id},
+     ${`${data.qty_proc} kgs processed on ${data.operation_date}`}, 'IN', ${data.qty_proc}, NOW(), NOW(), 'PROCESSED', 'PROCESSING')
+  ON CONFLICT ("trans_date", "factory_id", "field_supply_id", "stock_type", "trans_mode", "source")
+  DO UPDATE SET
+    qty = "StockTransaction".qty + EXCLUDED.qty,
+    trans_description = EXCLUDED.trans_description,
+    updated_at = NOW();
+`;
+
+    await sql`COMMIT`;
+    return row as Processing;
+  } catch (error: any) {
+    await sql`ROLLBACK`;
+    console.error("Error creating processing:", error);
+    throw new Error(error.message);
+  }
+}
+ */
 export async function createProcessing(
   data: Processing,
   userId: string,
   factoryId: string,
 ): Promise<Processing | undefined> {
   try {
+    await sql`BEGIN`;
+
     const [row] = await sql`
-      INSERT INTO "CropProcessing" (operation_date, factory_id, process_grade_id, qty_proc, user_id)
-      VALUES (${data.operation_date}, ${factoryId}, ${data.process_grade_id}, ${data.qty_proc}, ${userId})
-      RETURNING *
+      INSERT INTO "CropProcessing" (
+        operation_date, factory_id, process_grade_id, qty_proc, user_id
+      )
+      VALUES (
+        ${data.operation_date}, ${factoryId}, ${data.process_grade_id}, ${data.qty_proc}, ${userId}
+      )
+      RETURNING *;
     `;
+
+    const mappedGrade = gradeMapping[Number(data.process_grade_id)];
+
+    // Deduct from UNPROCESSED stock
+    await sql`
+      INSERT INTO "StockTransaction"
+        ("trans_date", "factory_id", "field_supply_id",
+         "trans_description", "trans_mode", "qty", "created_at", "updated_at", "stock_type", "source")
+      VALUES
+        (${data.operation_date}, ${factoryId}, ${mappedGrade},
+         ${`${data.qty_proc} kgs processed on ${data.operation_date}`}, 'OUT', ${data.qty_proc}, NOW(), NOW(), 'UNPROCESSED', 'PROCESSING')
+      ON CONFLICT ("trans_date", "factory_id", "field_supply_id", "stock_type", "trans_mode", "source")
+      DO UPDATE SET
+        qty = "StockTransaction".qty + EXCLUDED.qty,
+         trans_description = (("StockTransaction".qty + EXCLUDED.qty)::text || ' kgs processed on ' || EXCLUDED.trans_date::text),
+         updated_at = NOW();
+    `;
+
+    // Add to PROCESSED stock
+    await sql`
+      INSERT INTO "StockTransaction"
+        ("trans_date", "factory_id", "field_supply_id",
+         "trans_description", "trans_mode", "qty", "created_at", "updated_at", "stock_type", "source")
+      VALUES
+        (${data.operation_date}, ${factoryId}, ${data.process_grade_id},
+         ${`${data.qty_proc} kgs processed on ${data.operation_date}`}, 'IN', ${data.qty_proc}, NOW(), NOW(), 'PROCESSED', 'PROCESSING')
+      ON CONFLICT ("trans_date", "factory_id", "field_supply_id", "stock_type", "trans_mode", "source")
+      DO UPDATE SET
+        qty = "StockTransaction".qty + EXCLUDED.qty,
+        trans_description = (("StockTransaction".qty + EXCLUDED.qty)::text || ' kgs processed on ' || EXCLUDED.trans_date::text),
+        updated_at = NOW();
+    `;
+
+    await sql`COMMIT`;
     return row as Processing;
   } catch (error: any) {
+    await sql`ROLLBACK`;
+    console.error("Error creating processing:", error);
     throw new Error(error.message);
   }
 }

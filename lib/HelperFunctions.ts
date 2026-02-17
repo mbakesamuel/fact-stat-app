@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { Factory, ProductType, SupplyUnit } from "./types";
+import { Factory, ProductType, StockType, SupplyUnit } from "./types";
 
 export const formatDateForInput = (dateString: string) => {
   if (!dateString) return "";
@@ -53,4 +53,45 @@ export function formatPeriod(
     default:
       return format(date, "MMM dd, yyyy");
   }
+}
+
+//grade mapping
+
+export const gradeMapping: Record<number, number> = {
+  5: 1,
+  6: 1,
+  7: 2,
+};
+
+//
+export function transformBalances(data: any[]): StockType {
+  const dict: StockType = {
+    unprocessed: {
+      Latex: 0,
+      Cuplumps: 0,
+      Coagulum: 0,
+      Scrap: 0,
+    },
+    processed: {
+      RSS: 0,
+      "CNR 3L": 0,
+      "CNR 10": 0,
+    },
+  };
+
+  data.forEach((row) => {
+    const qty = Number(row.net_stock);
+
+    if (row.stock_type === "UNPROCESSED") {
+      if (dict.unprocessed[row.product] !== undefined) {
+        dict.unprocessed[row.product] = qty;
+      }
+    } else if (row.stock_type === "PROCESSED") {
+      if (dict.processed[row.product] !== undefined) {
+        dict.processed[row.product] = qty;
+      }
+    }
+  });
+
+  return dict;
 }

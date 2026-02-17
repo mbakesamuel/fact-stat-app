@@ -16,7 +16,7 @@ export function FactoryFilter({
 }: FactoryFilterProps) {
   return (
     <div className="flex items-center gap-4">
-      <Filter className="w-5 h-5 text-slate-500" />
+     {/*  <Filter className="w-5 h-5 text-slate-500" /> */}
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
