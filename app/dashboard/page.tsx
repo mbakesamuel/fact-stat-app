@@ -1,11 +1,9 @@
 import Dashboard from "../components/dashboard";
-import DashboardClient from "../components/dashboard";
 
 export default function DashboardPage() {
- /*  const data: Data[] = []; */
-  return(
+  return (
     <div>
       <Dashboard />
     </div>
-  ) 
+  );
 }

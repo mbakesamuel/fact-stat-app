@@ -41,7 +41,7 @@ export default function SidebarClient() {
 
   if (!user) {
     return (
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center justify-center space-x-2">
         <Spinner className="text-emeral-600 size-6" />
         <span>Loading...</span>
       </div>

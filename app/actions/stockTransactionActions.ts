@@ -47,7 +47,7 @@ export async function getStockSummaryProcPivot(): Promise<PStockItem> {
 
 //get transactions
 export async function getTransactions(
-  factoryId?: string, // optional parameter
+  factoryId?: string,
 ): Promise<Transaction[]> {
   const rows = factoryId
     ? await sql`
