@@ -57,12 +57,12 @@ export async function updateShippingOrder(
     const rows = await sql`
       UPDATE "ShippingOrder"
       SET
-        "orderDate"  = COALESCE(${data.orderDate}, "orderDate"),
+        "order_date"  = COALESCE(${data.orderDate}, "order_date"),
         "buyer"      = COALESCE(${data.buyer}, "buyer"),
         "period"     = COALESCE(${data.period}, "period"),
         "destination"= COALESCE(${data.destination}, "destination"),
-        "agentId"    = COALESCE(${data.agentId}, "agentId")
-      WHERE "contractNo" = ${contractNo}
+        "agent_id"    = COALESCE(${data.agentId}, "agent_id")
+      WHERE "contract_no" = ${contractNo}
       RETURNING *;
     `;
     return rows[0];
@@ -75,7 +75,7 @@ export async function updateShippingOrder(
 // Delete a ShippingOrder
 export async function deleteShippingOrder(contractNo: string) {
   try {
-    await sql`DELETE FROM "ShippingOrder" WHERE "contractNo" = ${contractNo}`;
+    await sql`DELETE FROM "ShippingOrder" WHERE "contract_no" = ${contractNo}`;
     return { success: true };
   } catch (error: any) {
     console.error("Error deleting shipping order:", error);

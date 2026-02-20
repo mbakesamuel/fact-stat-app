@@ -60,11 +60,11 @@ export async function updateShippingOrderDetail(
     const rows = await sql`
       UPDATE "ShippingOrderDetails"
       SET
-        contractNo = COALESCE(${data.contractNo}, contractNo),
-        "classId"   = COALESCE(${data.classId}, "classId"),
-        "gradeId"   = COALESCE(${data.gradeId}, "gradeId"),
-        packing     = COALESCE(${data.packing}, packing),
-        qty         = COALESCE(${data.qty}, qty)
+        "contract_no" = COALESCE(${data.contractNo}, contract_no),
+        "class_id"   = COALESCE(${data.classId}, class_id),
+        "grade_id"   = COALESCE(${data.gradeId}, grade_id),
+        "packing"     = COALESCE(${data.packing}, packing),
+        "qty"         = COALESCE(${data.qty}, qty)
       WHERE id = ${id}
       RETURNING *;
     `;

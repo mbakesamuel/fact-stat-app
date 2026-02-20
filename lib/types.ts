@@ -200,9 +200,9 @@ export type PackingMethod = {
 };
 
 export type ShipmentLoadingDetails = {
-  id: number;
+  id?: number;
   contractNo: string;
-  factoryId: number;
+  factoryId: string;
   loadingDate: Date;
   departDate: Date;
   vessel: string;

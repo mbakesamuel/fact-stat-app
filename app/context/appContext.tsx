@@ -18,7 +18,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Spinner className="text-emeral-600 size-24" />
+        <Spinner className="text-emeral-600 size-8" />
         <span>Loading...</span>
       </div>
     );

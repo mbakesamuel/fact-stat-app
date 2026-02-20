@@ -22,12 +22,12 @@ export default async function Shipment() {
   return (
     <div>
       <RubberShipment
-        orders={orders}
+        ordersInit={orders}
         agents={agents}
         rubberClasses={rubberclasses}
         products={products}
         packingMethods={packingMethods}
-        orderDetails={orderDetails}
+        orderDetailsInit={orderDetails}
         loadDetails={loadDetails}
       />
     </div>

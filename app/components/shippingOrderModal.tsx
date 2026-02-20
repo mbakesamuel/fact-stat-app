@@ -45,6 +45,8 @@ export default function ShippingOrderModal({
   packingMethods,
   onClose,
   orderDetails,
+  refreshOrders,
+  refreshOrderDetails,
 }: {
   order: Order | null;
   agents: Agents[];
@@ -53,6 +55,8 @@ export default function ShippingOrderModal({
   packingMethods: PackingMethod[];
   onClose: () => void;
   orderDetails: OrderDetails[];
+  refreshOrders: () => void;
+  refreshOrderDetails: () => void;
 }) {
   const [orderItems, setOrderItems] = useState<OrderDetails[]>([]);
   const [formData, setFormData] = useState({
@@ -146,7 +150,7 @@ export default function ShippingOrderModal({
         await Promise.all(
           orderItems.map((item) =>
             createShippingOrderDetail(
-              formData.contractNo,
+              payload.contract_no,
               Number(item.class_id),
               Number(item.grade_id),
               item.packing,
@@ -157,16 +161,16 @@ export default function ShippingOrderModal({
       }
 
       // Refresh UI after success
-      // await refreshOrders(); // your own function to reload orders
-      //await refreshOrderDetails(); // your own function to reload details
+      refreshOrders();
+      refreshOrderDetails();
       onClose();
     } catch (error) {
       console.error("Error saving order:", error);
-      // Show error feedback to user (toast, alert, etc.)
     }
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     saveOrder(formData);
   };
 

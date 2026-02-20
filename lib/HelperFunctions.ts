@@ -95,3 +95,5 @@ export function transformBalances(data: any[]): StockType {
 
   return dict;
 }
+
+

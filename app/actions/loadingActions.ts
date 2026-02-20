@@ -2,12 +2,11 @@
 
 import { sql } from "@/lib/db";
 import { ShipmentLoadingDetails } from "@/lib/types";
-import { fDate } from "@/lib/HelperFunctions";
 
 // 1. create
 export default async function createLoading(
   formData: Omit<ShipmentLoadingDetails, "id">,
-  factoryId: number,
+  factoryId: string,
 ): Promise<ShipmentLoadingDetails> {
   const rows = await sql`
     INSERT INTO "ShipmentLoadingDetails"
@@ -31,15 +30,15 @@ export default async function createLoading(
 
 // 2. read all
 export async function getAllLoading(
-  contractNo?: string,
+  factoryId?: string,
 ): Promise<ShipmentLoadingDetails[]> {
   let rows;
   //contract is not unique, is a foreign key
-  if (contractNo) {
+  if (factoryId) {
     // Fetch only records for this contract
     const result = await sql`
       SELECT * FROM "ShipmentLoadingDetails"
-      WHERE "contract_no" = ${contractNo};
+      WHERE "factory_id" = ${factoryId};
     `;
     rows = result;
   } else {

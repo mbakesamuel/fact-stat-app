@@ -39,15 +39,15 @@ export default function SidebarClient() {
   const { signOut } = useClerk();
   const { user } = useUser();
 
-  if (!user) {
+  /* if (!user) {
     return (
       <div className="flex items-center justify-center space-x-2">
-        <Spinner className="text-emeral-600 size-6" />
+        <Spinner className="text-emeral-600 size-4" />
         <span>Loading...</span>
       </div>
     );
   }
-
+ */
   const isAdmin = (user?.publicMetadata.role as string) === "admin";
 
   const navigation: NavItem[] = [
@@ -94,7 +94,7 @@ export default function SidebarClient() {
 
   // Role-based filtering
   const filteredNavigation = navigation.filter((item) =>
-    item.roles.includes((user.publicMetadata.role as string) || ""),
+    item.roles.includes((user?.publicMetadata.role as string) || ""),
   );
 
   //clerk signout

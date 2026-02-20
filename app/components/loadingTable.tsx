@@ -36,7 +36,7 @@ export default function LoadingTable({
   status,
 }: {
   loadings: ShipmentLoadingDetails[];
-  factoryId: number;
+  factoryId: string;
   contract_no?: string;
   status: { orderQty: number; loadedQty: number; balance: number } | null;
 }) {
@@ -52,14 +52,14 @@ export default function LoadingTable({
   const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  useEffect(() => {
+  /*   useEffect(() => {
     setData(loadings);
-  }, [loadings]);
+  }, [loadings]); */
 
   //computation for total quantity in the table footer
   const totalQty = loadings.reduce((sum, load) => sum + load.qty, 0);
 
-  type SaveInput = Omit<ShipmentLoadingDetails, "id"> & { id?: number };
+  type SaveInput = ShipmentLoadingDetails
 
   const handleSave = async (formData: SaveInput) => {
     if (formData.id) {
@@ -86,8 +86,10 @@ export default function LoadingTable({
     <div className="space-y-6 animate-in fade-in duration-500">
       <Card className="glass-effect border-none shadow-lg overflow-hidden pl-4">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">
-            Loading Details
+          <CardTitle>
+            <h1 className="text-2xl text-emerald-600">
+              Contract Loading Details
+            </h1>
           </CardTitle>
           <div className="flex justify-center md:justify-end">
             <Button
@@ -99,111 +101,6 @@ export default function LoadingTable({
           </div>
         </CardHeader>
         <CardContent>
-          {/* <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Contract No</TableHead>
-                <TableHead>Loading Date</TableHead>
-                <TableHead>Departure Date</TableHead>
-                <TableHead>Vessel</TableHead>
-                <TableHead>Container No</TableHead>
-                <TableHead>Seal No</TableHead>
-                <TableHead>Tally No</TableHead>
-                <TableHead>Quantity</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {!data ? (
-                [...Array(5)].map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell>
-                      <Skeleton className="h-4 w-24" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-32" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-24" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-28" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-16" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-8 w-20" />
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : data.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    className="text-center py-8 text-slate-500"
-                    colSpan={9}
-                  >
-                    No Loading Details yet
-                  </TableCell>
-                </TableRow>
-              ) : (
-                data.map((load) => (
-                  <TableRow key={load.id}>
-                    <TableCell>{load.contractNo}</TableCell>
-                    <TableCell>
-                      {new Date(load.loadingDate).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(load.departDate).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>{load.vessel}</TableCell>
-                    <TableCell>{load.containerNo}</TableCell>
-                    <TableCell>{load.sealNo}</TableCell>
-                    <TableCell>{load.tallyNo}</TableCell>
-                    <TableCell>{load.qty.toLocaleString()}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => {
-                            setEditingItem(load);
-                            setIsDialogOpen(true);
-                          }}
-                          size="sm"
-                          variant="ghost"
-                          className="hover:bg-blue-50 hover:text-blue-600"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          onClick={() => {
-                            setDeleteId(load.id);
-                            setConfirmOpen(true);
-                          }}
-                          size="sm"
-                          variant="ghost"
-                          className="hover:bg-red-50 hover:text-red-600"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-            <TableFooter>
-              <TableRow>
-                <TableCell colSpan={7} className="text-center font-bold">
-                  Total
-                </TableCell>
-                <TableCell className="text-left font-bold">
-                  {totalQty.toLocaleString()}
-                </TableCell>
-                <TableCell />
-              </TableRow>
-            </TableFooter>
-          </Table> */}
           <div className="space-y-4 md:hidden">
             {data.map((load) => (
               <LoadingCard

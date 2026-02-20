@@ -5,16 +5,19 @@ import {
   getLoadingBalanceByContract,
 } from "@/app/actions/loadingActions";
 import LoadingTable from "@/app/components/loadingTable";
+import { currentUser } from "@clerk/nextjs/server";
 
 export default async function LoadingPage({
   searchParams,
 }: {
   searchParams: Promise<{ contract_no: string }>;
 }) {
-  const factoryId = 3;
+  const user = await currentUser();
+  const factoryId = user?.publicMetadata.factoryId as string;
+
   const { contract_no } = await searchParams;
 
-  const loadings = await getAllLoading(contract_no);
+  const loadings = await getAllLoading(factoryId);
   const status = await getLoadingBalanceByContract(contract_no);
 
   return (
